@@ -1,2 +1,2 @@
-# queueing-theory
+# Queueing
 Queueing Theory in python.
