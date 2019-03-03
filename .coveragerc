@@ -1,0 +1,5 @@
+[run]
+source = queueing
+
+[report]
+omit = test*, .eggs*
