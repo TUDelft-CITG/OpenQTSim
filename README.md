@@ -1,2 +1,3 @@
 # Queueing
-Queueing Theory in python.
+
+The queueing packages facilitates discrete event simulation of queues with a Kendall notation.

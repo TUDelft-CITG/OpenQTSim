@@ -56,7 +56,7 @@ setup(
     setup_requires = setup_requirements,
     test_suite = "tests",
     tests_require = tests_require,
-    url = "https://github.com/TUDelft-CITG/queueing",
+    url = "https://github.com/TUDelft-CITG/Queueing-Theory",
     version = "0.1.0",
     zip_safe = False,
 )
