@@ -1,6 +1,9 @@
 import simpy
+import random
 import pandas as pd
 import numpy as np
+
+from .queue import queue
 
 class simulation():
     """

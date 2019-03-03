@@ -1,4 +1,7 @@
+import random
 from scipy import stats
+
+from .customer import customer
 
 class arrival_process:
     """
