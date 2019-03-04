@@ -14,7 +14,7 @@ class service_process:
         
         self.symbol = symbol
         self.service_distribution = service_distribution
-        self.mean_service_time = float(self.service_distribution.stats(moments='m'))
+        self.mean_service_time = self.service_distribution.mean()
             
     def service(self):
         """

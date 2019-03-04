@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 class queue:
     """
@@ -23,6 +24,7 @@ class queue:
         self.N = N
         self.D = D
     
+    @property
     def kendall_notation(self):
         """
         Return queue according to the kendall notation.
@@ -35,20 +37,73 @@ class queue:
                                           str(self.N),
                                           self.D)
     
-    def utilization(self, per_server = False):
+    @property
+    def utilization(self):
         """
-        The queue utilazation (rho) is equal to arrival rate (lambda)
-        multiplied with the mean service time (E(S)).
-        
+        Returns the utilization.
+
         If the utilization is larger than c the queue length will explode,
         become infinitely long.
-        
-        If per_server is True, the utilization per server will be returned.
+
+        For an M/M/c queue:
+        The queue utilazation (rho) is equal to arrival rate (lambda)
+        multiplied with the mean service time (E(S)).
         """
         
-        utilization = self.A.arrival_rate * self.S.mean_service_time
-        
-        if per_server == True:
-            return utilization / self.c
-        else:
-            return utilzation
+        if self.kendall_notation[:3] == "M/M":
+            return (1 / self.A.arrival_rate)  / ((1 / self.S.mean_service_time) / self.c)
+    
+    @property
+    def mean_queue_length(self):
+        """
+        Returns the mean queue length.
+
+        For an M/M/c queue:
+
+        """
+
+        if self.kendall_notation[:3] == "M/M":
+            part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
+            part_2 =  0
+
+            for i in range(self.c):
+                n = i
+                part_2 += ((self.c * self.utilization) ** n) / np.math.factorial(n) 
+
+            part_3 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
+
+            delay_probability = part_1 / ((1 - self.utilization) * part_2 + part_3)
+
+            return delay_probability * (self.utilization / (1 - self.utilization))
+    
+    @property
+    def mean_waiting_time(self):
+        """
+        Returns the mean waiting time.
+
+        For an M/M/c queue:
+
+        """
+
+        if self.kendall_notation[:3] == "M/M":
+            part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
+            part_2 =  0
+
+            for i in range(self.c):
+                n = i
+                part_2 += ((self.c * self.utilization) ** n) / np.math.factorial(n) 
+
+            part_3 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
+
+            delay_probability = part_1 / ((1 - self.utilization) * part_2 + part_3)
+
+            return delay_probability * (1 / (1 - self.utilization)) * (1 / (self.c * (1 / self.S.mean_service_time)))
+
+
+    def steady_state_stats(self):
+        """
+        Return the steady state solutions.
+        """
+
+        return pd.DataFrame.from_dict({"Mean queue length": self.mean_queue_length,
+                                       "Mean waiting time": self.mean_waiting_time})

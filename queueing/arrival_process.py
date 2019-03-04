@@ -17,7 +17,7 @@ class arrival_process:
         
         self.symbol = symbol
         self.arrival_distribution = arrival_distribution
-        self.arrival_rate = float(self.arrival_distribution.stats(moments='m'))
+        self.arrival_rate = self.arrival_distribution.mean()
     
     def arrival(self, environment, simulation):
         """
@@ -31,7 +31,7 @@ class arrival_process:
             # In the case of a poisson arrival process
             if self.symbol == "M":
                 # Make a timestep based on the poisson process
-                time = random.expovariate(self.arrival_rate)
+                time = random.expovariate(1 / self.arrival_rate)
                 environment.arrivals.append(time)
                 yield environment.timeout(time)
 
