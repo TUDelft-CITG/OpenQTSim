@@ -51,12 +51,12 @@ class queue:
         """
         
         if self.kendall_notation[:3] == "M/M":
-            return (1 / self.A.arrival_rate)  / ((1 / self.S.mean_service_time) / self.c)
+            return (1 / self.A.arrival_rate)  / ((1 / self.S.mean_service_time) * self.c)
     
     @property
     def mean_queue_length(self):
         """
-        Returns the mean queue length.
+        Returns the mean queue length, E(L).
 
         For an M/M/c queue:
 
@@ -79,7 +79,7 @@ class queue:
     @property
     def mean_waiting_time(self):
         """
-        Returns the mean waiting time.
+        Returns the mean waiting time, E(W).
 
         For an M/M/c queue:
 

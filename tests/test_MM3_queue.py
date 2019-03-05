@@ -1,9 +1,14 @@
-"""Tests for queueing package."""
-
+from scipy import stats
 import numpy as np
+import pytest
+
 import queueing
 
-from scipy import stats
+"""
+Testing the M/M/3 queue.
+The long term averages should be equal to the input.
+"""
+
 
 def test_MM3_queue():
     A = queueing.arrival_process("M", stats.poisson(1))
