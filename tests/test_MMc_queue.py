@@ -7,7 +7,6 @@ import queueing
 """
 Testing the M/M/c/inf/inf/FIFO queue, in this case c = 3.
 All answers are compared to the analytical solutions.
-
 """
 
 @pytest.fixture
@@ -45,4 +44,4 @@ def test_simulation(Q):
     np.testing.assert_almost_equal(sim.environment.queue.A.arrival_rate, np.mean(sim.environment.arrivals), decimal = 3)
     np.testing.assert_almost_equal(sim.environment.queue.S.mean_service_time, np.mean(sim.environment.service_times), decimal = 3)
     np.testing.assert_almost_equal(Q.mean_waiting_time, np.mean(sim.environment.waiting_times), decimal = 1)
-    np.testing.assert_almost_equal(Q.mean_queue_length, np.mean(sim.log["In Queue"]), decimal = 1)
+    np.testing.assert_almost_equal(Q.mean_queue_length, np.mean(sim.log["In queue"]), decimal = 1)

@@ -53,8 +53,8 @@ class queue:
         multiplied with the mean service time (E(S)).
         """
         
-        if self.kendall_notation[:3] == "M/M":
-            return (1 / self.A.arrival_rate)  / ((1 / self.S.mean_service_time) * self.c)
+        if self.kendall_notation[:3] == "M/M" and self.kendall_notation[6:] == "inf/inf/FIFO":
+            return (1. / self.A.arrival_rate)  / ((1. / self.S.mean_service_time) * self.c)
     
     @property
     def mean_queue_length(self):
@@ -65,7 +65,7 @@ class queue:
 
         """
 
-        if self.kendall_notation[:3] == "M/M":
+        if self.kendall_notation[:3] == "M/M" and self.kendall_notation[6:] == "inf/inf/FIFO":
             # Try to vectorize this
 
             part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
@@ -89,7 +89,7 @@ class queue:
 
         """
 
-        if self.kendall_notation[:3] == "M/M":
+        if self.kendall_notation[:3] == "M/M" and self.kendall_notation[6:] == "inf/inf/FIFO":
             part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
             part_2 =  0
 

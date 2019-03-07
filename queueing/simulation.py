@@ -45,17 +45,21 @@ class simulation():
         """
         
         self.environment.process(self.environment.queue.A.arrival(self.environment, self))
+        self.environment.process(self.log_entry())
         self.environment.run(until = time)
         
-    def log_entry(self, time, in_queue, in_service):
+    def log_entry(self):
         """
         Update the log based on the current timestamp.
         """
-        
-        self.log["Time"].append(time)
-        self.log["In queue"].append(in_queue)
-        self.log["In service"].append(in_service)
-        self.log["In system"].append(in_queue + in_service)
+
+        while True:
+            self.log["Time"].append(self.environment.now)
+            self.log["In queue"].append(self.environment.in_queue)
+            self.log["In service"].append(self.environment.in_service)
+            self.log["In system"].append(self.environment.in_queue + self.environment.in_service)
+
+            yield self.environment.timeout(1)
     
     def return_log(self, to_csv = False):
         """

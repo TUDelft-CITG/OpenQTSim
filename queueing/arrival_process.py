@@ -26,8 +26,7 @@ class arrival_process:
         """
         
         while True:
-            simulation.log_entry(environment.now, environment.in_queue, environment.in_service)
-            
+                        
             # In the case of a poisson arrival process
             if self.symbol == "M":
                 # Make a timestep based on the poisson process
