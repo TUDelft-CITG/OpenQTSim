@@ -41,7 +41,10 @@ def test_simulation(Q):
     sim = queueing.simulation(Q)
     sim.simulate(2500000)
 
+    # Assert similarities of arrival rate and service times between simulation and analytical solutions
     np.testing.assert_almost_equal(sim.environment.queue.A.arrival_rate, np.mean(sim.environment.arrivals), decimal = 3)
     np.testing.assert_almost_equal(sim.environment.queue.S.mean_service_time, np.mean(sim.environment.service_times), decimal = 3)
-    np.testing.assert_almost_equal(Q.mean_waiting_time, np.mean(sim.environment.waiting_times), decimal = 1)
-    np.testing.assert_almost_equal(Q.mean_queue_length, np.mean(sim.log["In queue"]), decimal = 1)
+
+    # Assert similarities of waiting times and queue lengths between simulation and analytical solutions
+    assert np.isclose(Q.mean_waiting_time, np.mean(sim.environment.waiting_times), rtol = 0.001, atol = 0.1)
+    assert np.isclose(Q.mean_queue_length, np.mean(sim.log["In queue"]), rtol = 0.001, atol = 0.1)
