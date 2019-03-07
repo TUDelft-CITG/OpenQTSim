@@ -23,6 +23,9 @@ class queue:
         self.K = K
         self.N = N
         self.D = D
+
+        if self.utilization > 1:
+            raise AssertionError("Utilization > 1.\nIf the utilization is larger than the number of servers the queue length will become infinitely long")
     
     @property
     def kendall_notation(self):
@@ -63,11 +66,12 @@ class queue:
         """
 
         if self.kendall_notation[:3] == "M/M":
+            # Try to vectorize this
+
             part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
             part_2 =  0
 
-            for i in range(self.c):
-                n = i
+            for n in range(self.c):
                 part_2 += ((self.c * self.utilization) ** n) / np.math.factorial(n) 
 
             part_3 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
