@@ -3,12 +3,13 @@
 [![CircleCI](https://circleci.com/gh/TUDelft-CITG/Queueing-Theory.svg?style=svg&circle-token=fe7b8b4d1c30d69ef17df79ebd9e81c3e4823b7e)](https://circleci.com/gh/TUDelft-CITG/Queueing-Theory)
 [ ![Coverage](https://oedm.vanoord.com/proxy/circleci_no_redirect/github/TUDelft-CITG/Queueing-Theory/master/latest/f2a7d426bda80a2a2cafbc0d7ac7f5d60e06838e/tmp/artifacts/coverage.svg)](https://oedm.vanoord.com/proxy/circleci_no_redirect/github/TUDelft-CITG/Queueing-Theory/master/latest/f2a7d426bda80a2a2cafbc0d7ac7f5d60e06838e/tmp/artifacts/index.html)
 [ ![Documentation](https://img.shields.io/badge/sphinx-documentation-brightgreen.svg)](https://oedm.vanoord.com/proxy/circleci_no_redirect/github/TUDelft-CITG/Queueing-Theory/master/latest/f2a7d426bda80a2a2cafbc0d7ac7f5d60e06838e/tmp/artifacts/docs/index.html)
+[ ![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 
 # Queueing
 
 The queueing packages facilitates discrete event simulation of queues with a Kendall notation.
 
-The following [Kendall notation](https://en.wikipedia.org/wiki/Kendall's_notation) is used, A/S/c/K/N/D, in which:
+The following [Kendall notation](https://en.wikipedia.org/wiki/Kendall's_notation) is used, A / S / c / K / N / D, in which:
 
 - A is the arrival process;
 - S is the service time distribution;
@@ -60,13 +61,13 @@ At the moment only analytical results of M/M/c/inf/inf/FIFO are available in the
 
 ``` python
 # The utilization
-queue.utilization
+print(queue.utilization)
 
 # The mean waiting time
-queue.mean_waiting_time
+print(queue.mean_waiting_time)
 
 # The mean queue length
-queue.mean_queue_length
+print(queue.mean_queue_length)
 ```
 
 ### Simulation of a queue
