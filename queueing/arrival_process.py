@@ -1,7 +1,7 @@
 import random
 from scipy import stats
 
-from .customer import customer
+from queueing.customer import customer
 
 
 class arrival_process:
@@ -31,7 +31,7 @@ class arrival_process:
             # In the case of a poisson arrival process
             if self.symbol == "M":
                 # Make a timestep based on the poisson process
-                time = random.expovariate(self.arrival_distribution.mean())
+                time = random.expovariate(self.arrival_rate)
                 environment.arrivals.append(time)
                 yield environment.timeout(time)
 

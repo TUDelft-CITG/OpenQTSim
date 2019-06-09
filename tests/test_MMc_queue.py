@@ -48,3 +48,31 @@ def test_simulation(Q):
     # Assert similarities of waiting times and queue lengths between simulation and analytical solutions
     assert np.isclose(Q.mean_waiting_time, np.mean(sim.environment.waiting_times), rtol = 0.001, atol = 0.1)
     assert np.isclose(Q.mean_queue_length, np.mean(sim.log["In queue"]), rtol = 0.001, atol = 0.1)
+
+def test_analytical_solutions():
+    """
+    With values from https://www.win.tue.nl/~iadan/queueing.pdf
+    Page 45, table 5.1
+    
+    The utilization is constant at 0.90
+    """
+    
+    customers = [1, 2, 5, 10, 20]
+    delay_probability = [0.90, 0.85, 0.76, 0.67, 0.55]
+    mean_waiting_time = [9.00, 4.26, 1.53, 0.67, 0.28]
+
+    for i, c in enumerate(customers):
+
+        # Arrival process varies dependent on number of customers
+        A = queueing.arrival_process("M", stats.poisson(1 / (c * 0.9)))
+        
+        # Mean service time is 1 unit of time
+        S = queueing.service_process("M", stats.expon(0))
+
+        # Create queue
+        q = queueing.queue(A, S, c)
+
+        # Check results
+        assert np.isclose(0.9, q.utilization, rtol = 0.1, atol = 0.1)
+        assert np.isclose(delay_probability[i], q.delay_probability, rtol = 0.1, atol = 0.1)
+        assert np.isclose(mean_waiting_time[i], q.mean_waiting_time, rtol = 0.1, atol = 0.1)

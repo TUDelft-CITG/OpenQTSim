@@ -15,7 +15,8 @@ class service_process:
 
         self.symbol = symbol
         self.service_distribution = service_distribution
-        self.service_rate = 1 / self.service_distribution.mean()
+        self.service_rate = 1. / self.service_distribution.mean()
+        self.mean_service_time = self.service_distribution.mean()
 
     def service(self):
         """

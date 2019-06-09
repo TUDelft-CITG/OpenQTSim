@@ -25,9 +25,9 @@ class queue:
         self.N = N
         self.D = D
 
-        if self.utilization > 1:
+        if 1 < self.utilization:
             raise AssertionError(
-                "Utilization > 1. If the utilization is larger than the number of servers the queue length will become infinitely long"
+                "1 < Utilization. \nIf the utilization is larger than the number of servers the queue length will become infinitely long"
             )
 
     @property
@@ -55,9 +55,26 @@ class queue:
 
         if (
             self.kendall_notation[:3] == "M/M"
-            and self.kendall_notation[6:] == "inf/inf/FIFO"
+            and self.kendall_notation[-12:] == "inf/inf/FIFO"
         ):
             return (self.A.arrival_rate) / ((self.S.service_rate) * self.c)
+
+    @property
+    def delay_probability(self):
+        """
+        Returns the delay probability
+        """
+        # Try to vectorize this
+        part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
+        
+        part_2 = 0
+        for n in range(self.c):
+            part_2 += ((self.c * self.utilization) ** n) / np.math.factorial(n)
+
+        part_3 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
+
+        return part_1 / ((1 - self.utilization) * part_2 + part_3)
+
 
     @property
     def mean_queue_length(self):
@@ -70,21 +87,9 @@ class queue:
 
         if (
             self.kendall_notation[:3] == "M/M"
-            and self.kendall_notation[6:] == "inf/inf/FIFO"
+            and self.kendall_notation[-12:] == "inf/inf/FIFO"
         ):
-            # Try to vectorize this
-
-            part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
-            part_2 = 0
-
-            for n in range(self.c):
-                part_2 += ((self.c * self.utilization) ** n) / np.math.factorial(n)
-
-            part_3 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
-
-            delay_probability = part_1 / ((1 - self.utilization) * part_2 + part_3)
-
-            return delay_probability * (self.utilization / (1 - self.utilization))
+            return self.delay_probability * (self.utilization / (1 - self.utilization))
 
     @property
     def mean_waiting_time(self):
@@ -97,21 +102,10 @@ class queue:
 
         if (
             self.kendall_notation[:3] == "M/M"
-            and self.kendall_notation[6:] == "inf/inf/FIFO"
+            and self.kendall_notation[-12:] == "inf/inf/FIFO"
         ):
-            part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
-            part_2 = 0
-
-            for i in range(self.c):
-                n = i
-                part_2 += ((self.c * self.utilization) ** n) / np.math.factorial(n)
-
-            part_3 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
-
-            delay_probability = part_1 / ((1 - self.utilization) * part_2 + part_3)
-
             return (
-                delay_probability
+                self.delay_probability
                 * (1 / (1 - self.utilization))
                 * (1 / (self.c * (self.S.service_rate)))
             )
