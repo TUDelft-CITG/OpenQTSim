@@ -75,15 +75,36 @@ class simulation:
         # ITS = idle time of the server   
         """
 
+        # self.log["c"].append(self.customer_nr)
+        # self.log["IAT"].append(IAT)
+        # self.log["ST"].append(ST)
+        # self.log["AT"].append(AT - self.environment.epoch)
+        # self.log["TSB"].append(TSB - self.environment.epoch)
+        # self.log["TSE"].append(TSE - self.environment.epoch)
+        # self.log["TCWQ"].append(TSB - AT)  # todo: check
+        # self.log["TCSS"].append(TSE - AT)  # todo: check
+        # self.log["ITS"].append(TSB - AT)  # todo: check
+
         self.log["c"].append(self.customer_nr)
         self.log["IAT"].append(IAT)
         self.log["ST"].append(ST)
-        self.log["AT"].append(AT - self.environment.epoch)
-        self.log["TSB"].append(TSB - self.environment.epoch)
-        self.log["TSE"].append(TSE - self.environment.epoch)
-        self.log["TCWQ"].append(TSB - AT)  # todo: check
-        self.log["TCSS"].append(TSE - AT)  # todo: check
-        self.log["ITS"].append(TSB - AT)  # todo: check
+        if self.customer_nr == 1:
+            self.log["AT"].append(0 + IAT)
+        else:
+            self.log["AT"].append(self.log["AT"][-1] + IAT)
+
+        if self.customer_nr == 1:
+            self.log["TSB"].append(self.log["AT"][-1])
+        else:
+            self.log["TSB"].append(max([self.log["TSE"][-1], self.log["AT"][-1]]))
+
+        self.log["TSE"].append(self.log["TSB"][-1] + ST)
+        self.log["TCWQ"].append(self.log["TSB"][-1] - self.log["AT"][-1])  # todo: check
+        self.log["TCSS"].append(self.log["TSE"][-1] - self.log["AT"][-1])  # todo: check
+        if self.customer_nr == 1:
+            self.log["ITS"].append(0)  # todo: check
+        else:
+            self.log["ITS"].append(max([self.log["AT"][-1] - self.log["TSE"][-2], 0]))  # todo: check
 
     def return_log(self, to_csv=False):
         """
@@ -94,8 +115,8 @@ class simulation:
 
         dataframe = pd.DataFrame.from_dict(self.log)
 
-        if to_csv == True:
-            dataframe.to_csv("simulation_results.csv")
+        # if to_csv == True:
+        #     dataframe.to_csv("simulation_results.csv")
 
         return dataframe
 
