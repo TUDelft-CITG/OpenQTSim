@@ -24,6 +24,7 @@ class arrival_process:
         """
         While the simulation time does not exceed the maximum duration, generate customers
         according to the distribution of the arrival process.
+        Each time step is basically a new customer (so time equals customers)
         """
 
         while True:
@@ -32,11 +33,14 @@ class arrival_process:
             if self.symbol == "M":
                 # Make a timestep based on the poisson process
                 time = random.expovariate(self.arrival_rate)
+                environment.IAT=time
+                environment.ST=environment.queue.S.service()
                 environment.arrivals.append(time)
-                yield environment.timeout(time)
 
                 # Create a customer
                 customer_new = customer(environment.now, environment)
 
                 environment.in_queue += 1
                 environment.process(customer_new.move())
+
+                yield environment.timeout(time)

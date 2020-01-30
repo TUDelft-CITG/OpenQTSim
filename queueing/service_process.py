@@ -22,5 +22,5 @@ class service_process:
         """
         Return the service time based on the service time distribution.
         """
-
+        
         return self.service_distribution.rvs()

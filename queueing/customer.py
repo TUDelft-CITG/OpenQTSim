@@ -21,8 +21,11 @@ class customer:
             self.environment.in_service += 1
 
             service_time = self.environment.queue.S.service()
-            yield self.environment.timeout(service_time)
+            self.environment.ST=service_time
+
+            # yield self.environment.timeout(service_time)
             self.environment.service_times.append(service_time)
+            self.environment.ST=service_time
 
             self.environment.in_service -= 1
             self.environment.system_times.append(self.environment.now - self.arrival)
