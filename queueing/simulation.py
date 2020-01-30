@@ -2,9 +2,7 @@ import simpy
 import random
 import pandas as pd
 import numpy as np
-
-from .queue import queue
-
+import datetime, time
 
 class simulation:
     """
@@ -13,128 +11,79 @@ class simulation:
     - seed is a random seed to have retraceable simulations
     """
 
-    def __init__(self, queue, priority=False, seed=4):
+    def __init__(self, queue, maxiter=100, priority=False, seed=4):
         """
         Initialization
         """
+        self.simulation_start = datetime.datetime.now()
+        self.environment = simpy.Environment(initial_time=time.mktime(self.simulation_start.timetuple()))
+        self.environment.epoch = time.mktime(self.simulation_start.timetuple())
+
+        self.queue = queue
+
+        self.customer_nr = 0
+        self.maxiter = maxiter
+
+        self.log = {
+            "c": [],  # c = customer
+            "IAT": [],  # IAT = inter arrival time
+            "ST": [],  # ST = service time
+            "AT": [],  # AT = now + IAT
+            "TSB": [],  # TSB = time service begins
+            "TCWQ": [],  # TCWQ = time customer waits in the queue
+            "TSE": [],  # TSE = time service ends
+            "TCSS": [],  # TCSS = time customer spends in the system
+            "ITS": []}  # ITS = idle time of the server
 
         random.seed(seed)
 
-        self.environment = simpy.Environment()
-        self.environment.queue = queue
-        
-        self.environment.IAT = []
-        self.environment.ST = []
-
-        self.environment.waiting_times = []
-        self.environment.service_times = []
-        self.environment.system_times = []
-        self.environment.arrivals = []
-
-        self.environment.in_queue = 0
-        self.environment.in_service = 0
-        
-        # c = customer
-	# IAT = inter arrival time
-	# AT = now + IAT
-	# ST = service time
-	# TSB = time service begins
-	# TCWQ = time customer waits in the queue
-	# TSE = time service ends
-	# TCSS = time customer spends in the system
-        # ITS = idle time of the server
-        self.log = {
-            "c": [], 
-            "IAT": [], 
-            "AT": [],
-	    "ST": [],
-	    "TSB": [],
-	    "TCWQ": [],
-	    "TSE": [],
-	    "TCSS": [],
-	    "ITS": []}
- 
-#        self.log = {"Time": [], "In queue": [], "In service": [], "In system": []}
-
+        # set nr of servers
         if priority == False:
-            self.environment.servers = simpy.Resource(
-                self.environment, capacity=queue.c
-            )
+            self.environment.servers = simpy.Resource(self.environment, capacity=queue.c)
         else:
-            self.environment.servers = simpy.PriorityResource(
-                self.environment, capacity=queue.c
-            )
+            self.environment.servers = simpy.PriorityResource(self.environment, capacity=queue.c)
 
-    def simulate(self, time):
         """
         Simulate the queue
+        q = queueing.queue(A, S, c)
+        sim = queueing.simulation(q)
+        sim.simulate(5)
         """
 
-        self.environment.process(
-            self.environment.queue.A.arrival(self.environment, self)
-        )
-        self.environment.process(self.log_entry())
-        self.environment.run(until=time)
+        # arrival_process = self.queue.A
+        self.environment.process(self.queue.A.arrival(self.environment, self))
 
-    def log_entry(self):
+    def run(self, maxiter=1000):
+        self.maxiter = maxiter
+
+        self.environment.run()
+
+        print("")
+        print("*** Simulation finished in {}".format(datetime.timedelta(seconds=int(self.environment.now - self.environment.epoch))))
+
+    def log_entry(self, IAT, AT, ST, TSB, TSE):
         """
         Update the log based on the current timestamp.
         # c = customer
-	# IAT = inter arrival time
-	# AT = now + IAT
-	# ST = service time
-	# TSB = time service begins
-	# TCWQ = time customer waits in the queue
-	# TSE = time service ends
-	# TCSS = time customer spends in the system
+        # IAT = inter arrival time
+        # AT = now + IAT
+        # ST = service time
+        # TSB = time service begins
+        # TCWQ = time customer waits in the queue
+        # TSE = time service ends
+        # TCSS = time customer spends in the system
         # ITS = idle time of the server   
         """
 
-        while True:
-            self.log["c"].append(self.environment.now + 1)
-            
-            self.log["IAT"].append(self.environment.IAT)
-            
-            if self.environment.now == 0:
-               # time starts at 0, but the first customer does not have to arrive a t=0
-               self.log["AT"].append(0 + self.environment.IAT)
-            else:
-               self.log["AT"].append(self.log["AT"][-1] + self.environment.IAT)
-            
-            self.log["ST"].append(self.environment.ST)
-            
-            if self.environment.now == 0:
-               self.log["TSB"].append(0 + self.environment.IAT)
-            else:
-               self.log["TSB"].append(max([self.log["AT"][-1],self.log["TSE"][-1]]))
-            
-            self.log["TCWQ"].append(self.log["TSB"][-1] - self.log["AT"][-1])
-            
-            self.log["TSE"].append(self.log["TSB"][-1] + self.log["ST"][-1])
-            
-            self.log["TCSS"].append(self.log["TSE"][-1] - self.log["AT"][-1])
-            
-            self.log["ITS"].append(self.log["TSB"][-1] - self.log["AT"][-1])
- 
-            
-            # self.log["In queue"].append(self.environment.in_queue)
-            # self.log["In service"].append(self.environment.in_service)
-            # self.log["In system"].append(
-            #    self.environment.in_queue + self.environment.in_service
-            #)
-
-            yield self.environment.timeout(1)
-
-
-        # while True:
-        #    self.log["Time"].append(self.environment.now)
-        #    self.log["In queue"].append(self.environment.in_queue)
-        #    self.log["In service"].append(self.environment.in_service)
-        #    self.log["In system"].append(
-        #        self.environment.in_queue + self.environment.in_service
-        #    )
-        # 
-        #    yield self.environment.timeout(1)
+        self.log["c"].append(self.customer_nr)
+        self.log["IAT"].append(IAT)
+        self.log["ST"].append(ST)
+        self.log["AT"].append(AT - self.environment.epoch)
+        self.log["TSB"].append(TSB - self.environment.epoch)
+        self.log["TSE"].append(TSE - self.environment.epoch)
+        self.log["TCWQ"].append(TSB - AT)  # todo: check
+        self.log["TCSS"].append(TSE - AT)  # todo: check
+        self.log["ITS"].append(TSB - AT)  # todo: check
 
     def return_log(self, to_csv=False):
         """

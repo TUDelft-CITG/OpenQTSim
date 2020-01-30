@@ -19,6 +19,7 @@ class arrival_process:
         self.symbol = symbol
         self.arrival_distribution = arrival_distribution
         self.arrival_rate = 1. / self.arrival_distribution.mean()
+        self.mean_arrival_rate = self.arrival_distribution.mean()
 
     def arrival(self, environment, simulation):
         """
@@ -26,21 +27,17 @@ class arrival_process:
         according to the distribution of the arrival process.
         Each time step is basically a new customer (so time equals customers)
         """
-
-        while True:
-
+        while simulation.customer_nr<simulation.maxiter:
             # In the case of a poisson arrival process
             if self.symbol == "M":
-                # Make a timestep based on the poisson process
-                time = random.expovariate(self.arrival_rate)
-                environment.IAT=time
-                environment.ST=environment.queue.S.service()
-                environment.arrivals.append(time)
-
                 # Create a customer
-                customer_new = customer(environment.now, environment)
+                customer_new = customer(environment, simulation)
 
-                environment.in_queue += 1
-                environment.process(customer_new.move())
+                yield from customer_new.move()
 
-                yield environment.timeout(time)
+    def get_IAT(self):
+        """
+        Return the service time based on the service time distribution.
+        """
+
+        return self.arrival_distribution.rvs()

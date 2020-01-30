@@ -18,7 +18,7 @@ class service_process:
         self.service_rate = 1. / self.service_distribution.mean()
         self.mean_service_time = self.service_distribution.mean()
 
-    def service(self):
+    def get_ST(self):
         """
         Return the service time based on the service time distribution.
         """
