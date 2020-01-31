@@ -34,9 +34,9 @@ class simulation:
             "ST": [],  # ST = service time
             "AT": [],  # AT = now + IAT
             "TSB": [],  # TSB = time service begins
-            "TCWQ": [],  # TCWQ = time customer waits in the queue
             "TSE": [],  # TSE = time service ends
             "TCSS": [],  # TCSS = time customer spends in the system
+            "TCWQ": [],  # TCWQ = time customer waits in the queue
             "ITS": []}  # ITS = idle time of the server
         self.seed = seed
 
@@ -114,31 +114,35 @@ class simulation:
 
     def return_log(self, to_csv=False):
         """
-        Return the log in the form of a pandas dataframe.
+        Return the log in the form of a pandas data frame.
         
         If to_csv is True, a .csv file will be saved with the name "simulation_results.csv"
         """
 
         dataframe = pd.DataFrame.from_dict(self.log)
 
-        # if to_csv == True:
-        #     dataframe.to_csv("simulation_results.csv")
+        if to_csv == True:
+            dataframe.to_csv("simulation_results.csv")
 
         return dataframe
 
     def get_stats(self):
-        print(
-            "The arrival rate is:      {:04.2f} seconds".format(
-                np.mean(self.environment.arrivals)
-            )
-        )
-        print(
-            "The mean waiting time is: {:04.2f} seconds".format(
-                np.mean(self.environment.waiting_times)
-            )
-        )
-        print(
-            "The mean service time is: {:04.2f} seconds".format(
-                np.mean(self.environment.service_times)
-            )
-        )
+        # https://www.youtube.com/watch?v=nDXD8oVelo4
+        print('Total number of customers: {:.2f}'.format(self.log["c"][-1]))
+        print('Average time between arrivals: {:.2f}'.format(np.sum(self.log["IAT"]) / (self.log["c"][-1] - 1)))
+        print('Average service time: {:.2f}'.format(np.sum(self.log["ST"]) / self.log["c"][-1]))
+        print('')
+        print('Total waiting time: {:.2f}'.format(np.sum(self.log["TCWQ"])))
+        print('Average waiting time of all customers: {:.2f}'.format(np.sum(self.log["TCWQ"]) / self.log["c"][-1]))
+        print('Average waiting time of customers that waited: {:.2f}'.format(np.sum(self.log["TCWQ"]) / np.sum(np.array(self.log["TCWQ"]) != 0)))
+        print('Probability that customers are waiting: {:.2f}'.format(np.sum(np.array(self.log["TCWQ"]) != 0) / self.log["c"][-1]))
+        print('')
+        print('Total service time: {:.2f}'.format(np.sum(self.log["ST"])))
+        print('Average total time a customer spent in the system: {:.2f}'.\
+              format(np.sum(self.log["TCSS"]) / self.log["c"][-1]))
+        print('Probability of idle server: {:.2f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
+
+        # deze klopt niet helemaal lijkt het
+        print('')
+        print('Server utilisation (%):', (np.sum(self.log["ITS"]) / np.sum(self.log["TCSS"]) / self.log["c"][-1]) * 100)
+
