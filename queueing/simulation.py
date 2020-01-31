@@ -2,7 +2,9 @@ import simpy
 import random
 import pandas as pd
 import numpy as np
-import datetime, time
+import datetime
+import time
+
 
 class simulation:
     """
@@ -11,7 +13,7 @@ class simulation:
     - seed is a random seed to have retraceable simulations
     """
 
-    def __init__(self, queue, maxiter=100, priority=False, seed=4):
+    def __init__(self, queue, type='probabilistic', maxarrivals=100, priority=False, seed=4):
         """
         Initialization
         """
@@ -22,7 +24,9 @@ class simulation:
         self.queue = queue
 
         self.customer_nr = 0
-        self.maxiter = maxiter
+        self.maxarrivals = maxarrivals
+
+        self.type = type
 
         self.log = {
             "c": [],  # c = customer
@@ -34,8 +38,7 @@ class simulation:
             "TSE": [],  # TSE = time service ends
             "TCSS": [],  # TCSS = time customer spends in the system
             "ITS": []}  # ITS = idle time of the server
-
-        random.seed(seed)
+        self.seed = seed
 
         # set nr of servers
         if priority == False:
@@ -53,15 +56,15 @@ class simulation:
         # arrival_process = self.queue.A
         self.environment.process(self.queue.A.arrival(self.environment, self))
 
-    def run(self, maxiter=1000):
-        self.maxiter = maxiter
+    def run(self, maxarrivals=1000):
+        self.maxarrivals = maxarrivals
 
         self.environment.run()
 
         print("")
         print("*** Simulation finished in {}".format(datetime.timedelta(seconds=int(self.environment.now - self.environment.epoch))))
 
-    def log_entry(self, IAT, AT, ST, TSB, TSE):
+    def log_entry(self, customer_nr, IAT, AT, ST, TSB, TSE):
         """
         Update the log based on the current timestamp.
         # c = customer
@@ -75,36 +78,39 @@ class simulation:
         # ITS = idle time of the server   
         """
 
+        self.log["c"].append(customer_nr)
+        self.log["IAT"].append(IAT)
+        self.log["ST"].append(ST)
+        self.log["AT"].append(AT)
+        self.log["TSB"].append(TSB)
+        self.log["TSE"].append(TSE)
+        self.log["TCWQ"].append(TSB - AT)  # todo: check
+        self.log["TCSS"].append(TSE - AT)  # todo: check
+        if len(self.log["c"]) == 1:
+            self.log["ITS"].append(0)  # todo: check
+        else:
+            self.log["ITS"].append(max([AT - self.log["TSE"][-2], 0]))  # todo: check
+
         # self.log["c"].append(self.customer_nr)
         # self.log["IAT"].append(IAT)
         # self.log["ST"].append(ST)
-        # self.log["AT"].append(AT - self.environment.epoch)
-        # self.log["TSB"].append(TSB - self.environment.epoch)
-        # self.log["TSE"].append(TSE - self.environment.epoch)
-        # self.log["TCWQ"].append(TSB - AT)  # todo: check
-        # self.log["TCSS"].append(TSE - AT)  # todo: check
-        # self.log["ITS"].append(TSB - AT)  # todo: check
-
-        self.log["c"].append(self.customer_nr)
-        self.log["IAT"].append(IAT)
-        self.log["ST"].append(ST)
-        if self.customer_nr == 1:
-            self.log["AT"].append(0 + IAT)
-        else:
-            self.log["AT"].append(self.log["AT"][-1] + IAT)
-
-        if self.customer_nr == 1:
-            self.log["TSB"].append(self.log["AT"][-1])
-        else:
-            self.log["TSB"].append(max([self.log["TSE"][-1], self.log["AT"][-1]]))
-
-        self.log["TSE"].append(self.log["TSB"][-1] + ST)
-        self.log["TCWQ"].append(self.log["TSB"][-1] - self.log["AT"][-1])  # todo: check
-        self.log["TCSS"].append(self.log["TSE"][-1] - self.log["AT"][-1])  # todo: check
-        if self.customer_nr == 1:
-            self.log["ITS"].append(0)  # todo: check
-        else:
-            self.log["ITS"].append(max([self.log["AT"][-1] - self.log["TSE"][-2], 0]))  # todo: check
+        # if self.customer_nr == 1:
+        #     self.log["AT"].append(0 + IAT)
+        # else:
+        #     self.log["AT"].append(self.log["AT"][-1] + IAT)
+        #
+        # if self.customer_nr == 1:
+        #     self.log["TSB"].append(self.log["AT"][-1])
+        # else:
+        #     self.log["TSB"].append(max([self.log["TSE"][-1], self.log["AT"][-1]]))
+        #
+        # self.log["TSE"].append(self.log["TSB"][-1] + ST)
+        # self.log["TCWQ"].append(self.log["TSB"][-1] - self.log["AT"][-1])  # todo: check
+        # self.log["TCSS"].append(self.log["TSE"][-1] - self.log["AT"][-1])  # todo: check
+        # if self.customer_nr == 1:
+        #     self.log["ITS"].append(0)  # todo: check
+        # else:
+        #     self.log["ITS"].append(max([self.log["AT"][-1] - self.log["TSE"][-2], 0]))  # todo: check
 
     def return_log(self, to_csv=False):
         """

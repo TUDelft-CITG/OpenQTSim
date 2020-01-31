@@ -27,13 +27,25 @@ class arrival_process:
         according to the distribution of the arrival process.
         Each time step is basically a new customer (so time equals customers)
         """
-        while simulation.customer_nr<simulation.maxiter:
+        while simulation.customer_nr < simulation.maxarrivals:
             # In the case of a poisson arrival process
             if self.symbol == "M":
+                # Draw IAT and ST
+                IAT = simulation.queue.A.get_IAT()
+                ST = simulation.queue.S.get_ST()
+
+                # Move time one IAT forward
+                yield environment.timeout(IAT)
+
+                AT = environment.now - environment.epoch
+
                 # Create a customer
                 customer_new = customer(environment, simulation)
 
-                yield from customer_new.move()
+                # Make the customer go through the system
+                environment.process(customer_new.move(IAT, AT, ST))
+
+
 
     def get_IAT(self):
         """

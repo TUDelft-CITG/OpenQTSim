@@ -13,9 +13,15 @@ class queue:
     - D is the queue discipline
     """
 
-    def __init__(self, A, S, c, K=np.inf, N=np.inf, D="FIFO"):
+    def __init__(self, A, S, c, K=np.inf, N=np.inf, D="FIFO", customers=[]):
         """
         Initialization
+        The first six inputs are the typical Kendall inputs.
+        In case the simulation type is 'stochastic' A and S should be distributions from which separate instances can
+        be drawn. When the simulation type is 'deterministic' A and S should be equal length lists with values for
+        inter arrival times and service times. These will then one by one be picked in the simulation. Optional is to
+        add a corresponding list of customer ids or names. This will not influence statistics but may make inspection
+        of the simulation outputs easier.
         """
 
         self.A = A
@@ -24,6 +30,7 @@ class queue:
         self.K = K
         self.N = N
         self.D = D
+        self.customers = customers
 
         # if 1 < self.utilization:
         #     raise AssertionError(
