@@ -6,6 +6,20 @@ import datetime
 import time
 
 
+class MonitoredResource(simpy.Resource):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.data = []
+
+    def request(self, *args, **kwargs):
+        self.data.append((self._env.now, len(self.queue)))
+        return super().request(*args, **kwargs)
+
+    def release(self, *args, **kwargs):
+        self.data.append((self._env.now, len(self.queue)))
+        return super().release(*args, **kwargs)
+
+
 class simulation:
     """
     A discrete event simulation that simulates the queue.
@@ -37,14 +51,15 @@ class simulation:
             "TSE": [],  # TSE = time service ends
             "TCSS": [],  # TCSS = time customer spends in the system
             "TCWQ": [],  # TCWQ = time customer waits in the queue
-            "ITS": []}  # ITS = idle time of the server
+            "ITS": [],  # ITS = idle time of the server
+            "QL": []}  # QL = customers in the queue
         self.seed = seed
 
         # set nr of servers
         if priority == False:
-            self.environment.servers = simpy.Resource(self.environment, capacity=queue.c)
+            self.environment.servers = MonitoredResource(self.environment, capacity=queue.c)
         else:
-            self.environment.servers = simpy.PriorityResource(self.environment, capacity=queue.c)
+            self.environment.servers = MonitoredResource(simpy.PriorityResource(self.environment, capacity=queue.c))
 
         """
         Simulate the queue
@@ -61,7 +76,7 @@ class simulation:
 
         self.environment.run()
 
-    def log_entry(self, customer_nr, IAT, AT, ST, TSB, TSE):
+    def log_entry(self, customer_nr, IAT, AT, ST, TSB, TSE, QL):
         """
         Update the log based on the current timestamp.
         # c = customer
@@ -87,6 +102,7 @@ class simulation:
             self.log["ITS"].append(IAT)  # todo: check
         else:
             self.log["ITS"].append(max([AT - self.log["TSE"][-2], 0]))  # todo: check
+        self.log["QL"].append(QL)
 
         # self.log["c"].append(self.customer_nr)
         # self.log["IAT"].append(IAT)
@@ -109,14 +125,16 @@ class simulation:
         # else:
         #     self.log["ITS"].append(max([self.log["AT"][-1] - self.log["TSE"][-2], 0]))  # todo: check
 
-    def return_log(self, to_csv=False):
+    def return_log(self, nr_of_records_to_display=0, to_csv=False):
         """
         Return the log in the form of a pandas data frame.
         
         If to_csv is True, a .csv file will be saved with the name "simulation_results.csv"
         """
-
-        dataframe = pd.DataFrame.from_dict(self.log)
+        if nr_of_records_to_display == 0:
+            dataframe = pd.DataFrame.from_dict(self.log)
+        else:
+            dataframe = pd.DataFrame.from_dict(self.log).head(nr_of_records_to_display)
 
         if to_csv == True:
             dataframe.to_csv("simulation_results.csv")
@@ -126,25 +144,33 @@ class simulation:
     def get_stats(self):
         # https://www.youtube.com/watch?v=nDXD8oVelo4
         # https: // www.youtube.com / watch?v = QppldN - t4pQ
-        print('Total number of customers: {:.2f}'.format(self.log["c"][-1]))
-
+        # https: // www.supositorio.com / rcalc / rcalclite.htm
         print('Average IAT: {:.2f} [seconds]'.format(np.sum(self.log["IAT"]) / (self.log["c"][-1] - 1)))
         print('Average ST: {:.2f} [seconds]'.format(np.sum(self.log["ST"]) / self.log["c"][-1]))
-        # print('Average arrivals per hour: {:.2f}'.format(self.log["TSE"][-1]))
-        # print('Average services per hour: {:.2f}'.format())
+        print('')
+        print('Total number of customers: {:.2f}'.format(self.log["c"][-1]))
+        print('Average nr arrivals: {:.2f} [# per hour]'.format(3600/(np.sum(self.log["IAT"]) / (self.log["c"][-1] - 1))))
+        print('Average nr services: {:.2f} [# per hour]'.format(3600/(np.sum(self.log["ST"]) / (self.log["c"][-1] - 1))))
+
         print('')
         print('Total waiting time: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"])))
         print('Average waiting time of all customers: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"]) / self.log["c"][-1]))
         print('Average waiting time of customers that waited: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"]) / np.sum(np.array(self.log["TCWQ"]) != 0)))
-        print('Probability that customers are waiting: {:.2f}'.format(np.sum(np.array(self.log["TCWQ"]) != 0) / self.log["c"][-1]))
+
+        print('')
+        print('Probability of idle server (nobody in the system): {:.2f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
+        print('Probability that somebody is waiting: {:.2f}'.format(np.sum(np.array(self.log["QL"]) != 0) / self.log["c"][-1]))
+        print('Probability that nobody is waiting: {:.2f}'.format(np.sum(np.array(self.log["QL"]) == 0) / self.log["c"][-1]))
+        print('Probability that 1 person is waiting: {:.2f}'.format(np.sum(np.array(self.log["QL"]) == 1) / self.log["c"][-1]))
+        print('Probability that 2 persons are waiting: {:.2f}'.format(np.sum(np.array(self.log["QL"]) == 2) / self.log["c"][-1]))
+        print('Probability that 3 persons are waiting: {:.2f}'.format(np.sum(np.array(self.log["QL"]) == 3) / self.log["c"][-1]))
+        print('Probability that 9 persons are waiting (10 in system): {:.2f}'.format(np.sum(np.array(self.log["QL"]) == 9) / self.log["c"][-1]))
         print('')
         print('Total service time: {:.2f} [seconds]'.format(np.sum(self.log["ST"])))
         print('Average total time a customer spent in the system: {:.2f} [seconds]'.\
               format(np.sum(self.log["TCSS"]) / self.log["c"][-1]))
-        print('Probability of idle server: {:.2f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
-
-        # deze klopt niet helemaal lijkt het
+        print('Average waiting time as a fraction of ST: {:.2f}'.format(np.mean(np.array(self.log["TCWQ"]))/np.mean(np.array(self.log["ST"]))))
         print('')
-        print('Server utilisation: {:.2f}'.format((\
+        print('System utilisation: {:.2f}'.format((\
                                     ((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]) * 100)))
 

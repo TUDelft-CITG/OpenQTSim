@@ -27,8 +27,15 @@ class customer:
 
             # determine TSB
             TSB = self.environment.now - self.environment.epoch
+
             yield self.environment.timeout(ST)
+
             TSE = self.environment.now - self.environment.epoch
 
-            self.simulation.log_entry(self.customer_nr, IAT, AT, ST, TSB, TSE)
+            # release server when done
+            yield self.environment.servers.release(my_turn)
+
+            QL = self.environment.servers.data[-1][1]
+
+            self.simulation.log_entry(self.customer_nr, IAT, AT, ST, TSB, TSE, QL)
 
