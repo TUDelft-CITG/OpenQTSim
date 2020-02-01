@@ -61,9 +61,6 @@ class simulation:
 
         self.environment.run()
 
-        print("")
-        print("*** Simulation finished in {}".format(datetime.timedelta(seconds=int(self.environment.now - self.environment.epoch))))
-
     def log_entry(self, customer_nr, IAT, AT, ST, TSB, TSE):
         """
         Update the log based on the current timestamp.
@@ -87,7 +84,7 @@ class simulation:
         self.log["TCWQ"].append(TSB - AT)  # todo: check
         self.log["TCSS"].append(TSE - AT)  # todo: check
         if len(self.log["c"]) == 1:
-            self.log["ITS"].append(0)  # todo: check
+            self.log["ITS"].append(IAT)  # todo: check
         else:
             self.log["ITS"].append(max([AT - self.log["TSE"][-2], 0]))  # todo: check
 
@@ -128,21 +125,26 @@ class simulation:
 
     def get_stats(self):
         # https://www.youtube.com/watch?v=nDXD8oVelo4
+        # https: // www.youtube.com / watch?v = QppldN - t4pQ
         print('Total number of customers: {:.2f}'.format(self.log["c"][-1]))
-        print('Average time between arrivals: {:.2f}'.format(np.sum(self.log["IAT"]) / (self.log["c"][-1] - 1)))
-        print('Average service time: {:.2f}'.format(np.sum(self.log["ST"]) / self.log["c"][-1]))
+
+        print('Average IAT: {:.2f} [seconds]'.format(np.sum(self.log["IAT"]) / (self.log["c"][-1] - 1)))
+        print('Average ST: {:.2f} [seconds]'.format(np.sum(self.log["ST"]) / self.log["c"][-1]))
+        # print('Average arrivals per hour: {:.2f}'.format(self.log["TSE"][-1]))
+        # print('Average services per hour: {:.2f}'.format())
         print('')
-        print('Total waiting time: {:.2f}'.format(np.sum(self.log["TCWQ"])))
-        print('Average waiting time of all customers: {:.2f}'.format(np.sum(self.log["TCWQ"]) / self.log["c"][-1]))
-        print('Average waiting time of customers that waited: {:.2f}'.format(np.sum(self.log["TCWQ"]) / np.sum(np.array(self.log["TCWQ"]) != 0)))
+        print('Total waiting time: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"])))
+        print('Average waiting time of all customers: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"]) / self.log["c"][-1]))
+        print('Average waiting time of customers that waited: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"]) / np.sum(np.array(self.log["TCWQ"]) != 0)))
         print('Probability that customers are waiting: {:.2f}'.format(np.sum(np.array(self.log["TCWQ"]) != 0) / self.log["c"][-1]))
         print('')
-        print('Total service time: {:.2f}'.format(np.sum(self.log["ST"])))
-        print('Average total time a customer spent in the system: {:.2f}'.\
+        print('Total service time: {:.2f} [seconds]'.format(np.sum(self.log["ST"])))
+        print('Average total time a customer spent in the system: {:.2f} [seconds]'.\
               format(np.sum(self.log["TCSS"]) / self.log["c"][-1]))
         print('Probability of idle server: {:.2f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
 
         # deze klopt niet helemaal lijkt het
         print('')
-        print('Server utilisation (%):', (np.sum(self.log["ITS"]) / np.sum(self.log["TCSS"]) / self.log["c"][-1]) * 100)
+        print('Server utilisation: {:.2f}'.format((\
+                                    ((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]) * 100)))
 
