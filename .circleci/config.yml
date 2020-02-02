@@ -11,26 +11,26 @@ jobs:
       - run:
           name: Install coverage badge beforte running tests
           command: |
-            docker exec -it queueing-theory bash -c "pip install coverage coverage-badge"
+            docker exec -it openqtsim bash -c "pip install coverage coverage-badge "
       
       - run:
           name: Run tests
           command: |
-            docker exec -it queueing-theory bash -c "python setup.py test"
-            docker cp queueing-theory:/Queueing-Theory/htmlcov /tmp/artifacts
+            docker exec -it openqtsim bash -c "python setup.py test"
+            docker cp openqtsim:/OpenQTSim/htmlcov /tmp/artifacts
       
       - run:
           name: Build docs
           command: |
-            docker exec -it queueing-theory bash -c "pip install sphinx"
-            docker exec -it queueing-theory bash -c "python setup.py docs"
-            docker cp queueing-theory:/Queueing-Theory/docs/_build/html /tmp/artifacts/docs
+            docker exec -it openqtsim bash -c "pip install sphinx"
+            docker exec -it openqtsim bash -c "python setup.py docs"
+            docker cp openqtsim:/OpenQTSim/docs/_build/html /tmp/artifacts/docs
       
       - run:
           name: Generate coverage badge
           command: |
-            docker exec -it queueing-theory bash -c "coverage-badge -o coverage.svg"
-            docker cp queueing-theory:/Queueing-Theory/coverage.svg /tmp/artifacts/
+            docker exec -it openqtsim bash -c "coverage-badge -o coverage.svg"
+            docker cp openqtsim:/OpenQTSim/coverage.svg /tmp/artifacts/
       
       - store_artifacts:
           path: /tmp/artifacts
