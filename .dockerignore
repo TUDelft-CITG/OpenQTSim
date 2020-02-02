@@ -36,7 +36,6 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
-htmlcov/
 .tox/
 .coverage
 .coverage.*
@@ -100,6 +99,9 @@ ENV/
 
 # mypy
 .mypy_cache/# Elastic Beanstalk Files
+.elasticbeanstalk/*
+.git
+.gitignore# Elastic Beanstalk Files
 .elasticbeanstalk/*
 .git
 .gitignore# Elastic Beanstalk Files

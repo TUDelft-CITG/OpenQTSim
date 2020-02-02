@@ -1,28 +1,45 @@
+import random
+
 class customer:
     """
     Generate customers based on the arrival process.
     """
 
-    def __init__(self, arrival, environment):
+    def __init__(self, environment, simulation, customer_id=[]):
         """
         Initialization
         """
 
-        self.arrival = arrival
+        # self.arrival = arrival
         self.environment = environment
+        self.simulation = simulation
 
-    def move(self):
+        simulation.customer_nr += 1
+        self.customer_nr = simulation.customer_nr
+        if len(customer_id) == 0:
+            self.customer_id = simulation.customer_nr
+        else:
+            self.customer_id = customer_id
+
+    def move(self, IAT, AT, ST):
+        # draw IAT and ST from distributions
+        # inter_arrival_time = random.expovariate(self.arrival_rate)
+
+        # request access to server
         with self.environment.servers.request() as my_turn:
             yield my_turn
 
-            self.environment.waiting_times.append(self.environment.now - self.arrival)
+            # determine TSB
+            TSB = self.environment.now - self.environment.epoch
 
-            self.environment.in_queue -= 1
-            self.environment.in_service += 1
+            yield self.environment.timeout(ST)
 
-            service_time = self.environment.queue.S.service()
-            yield self.environment.timeout(service_time)
-            self.environment.service_times.append(service_time)
+            TSE = self.environment.now - self.environment.epoch
 
-            self.environment.in_service -= 1
-            self.environment.system_times.append(self.environment.now - self.arrival)
+            # release server when done
+            yield self.environment.servers.release(my_turn)
+
+            QL = self.environment.servers.data[-1][1]
+
+            self.simulation.log_entry(self.customer_id, IAT, AT, ST, TSB, TSE, QL)
+

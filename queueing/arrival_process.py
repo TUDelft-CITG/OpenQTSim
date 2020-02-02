@@ -19,24 +19,53 @@ class arrival_process:
         self.symbol = symbol
         self.arrival_distribution = arrival_distribution
         self.arrival_rate = 1. / self.arrival_distribution.mean()
+        self.mean_arrival_rate = self.arrival_distribution.mean()
 
     def arrival(self, environment, simulation):
         """
         While the simulation time does not exceed the maximum duration, generate customers
         according to the distribution of the arrival process.
+        Each time step is basically a new customer (so time equals customers)
         """
-
-        while True:
-
+        while simulation.customer_nr < simulation.maxarrivals:
             # In the case of a poisson arrival process
             if self.symbol == "M":
-                # Make a timestep based on the poisson process
-                time = random.expovariate(self.arrival_rate)
-                environment.arrivals.append(time)
-                yield environment.timeout(time)
+                # Draw IAT and ST
+                IAT = simulation.queue.A.get_IAT()
+                ST = simulation.queue.S.get_ST()
+
+                # Move time one IAT forward
+                yield environment.timeout(IAT)
+
+                AT = environment.now - environment.epoch
 
                 # Create a customer
-                customer_new = customer(environment.now, environment)
+                customer_new = customer(environment, simulation)
 
-                environment.in_queue += 1
-                environment.process(customer_new.move())
+                # Make the customer go through the system
+                environment.process(customer_new.move(IAT, AT, ST))
+
+            elif self.symbol == "D":
+                # Draw IAT and ST
+                id = simulation.queue.A.arrival_distribution.loc[simulation.customer_nr, ['name']].item()
+                IAT = simulation.queue.A.arrival_distribution.loc[simulation.customer_nr, ['IAT']].item()
+                ST = simulation.queue.S.service_distribution.loc[simulation.customer_nr, ['ST']].item()
+
+                # Move time one IAT forward
+                print(IAT)
+                yield environment.timeout(IAT)
+
+                AT = environment.now - environment.epoch
+
+                # Create a customer
+                customer_new = customer(environment, simulation, customer_id=id)
+
+                # Make the customer go through the system
+                environment.process(customer_new.move(IAT, AT, ST))
+
+    def get_IAT(self):
+        """
+        Return the service time based on the service time distribution.
+        """
+
+        return self.arrival_distribution.rvs()
