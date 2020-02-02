@@ -1,7 +1,7 @@
 import random
 from scipy import stats
 
-from queueing.customer import customer
+from openqtsim.customer import customer
 
 
 class arrival_process:
@@ -52,7 +52,6 @@ class arrival_process:
                 ST = simulation.queue.S.service_distribution.loc[simulation.customer_nr, ['ST']].item()
 
                 # Move time one IAT forward
-                print(IAT)
                 yield environment.timeout(IAT)
 
                 AT = environment.now - environment.epoch
