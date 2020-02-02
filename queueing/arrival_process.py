@@ -35,20 +35,18 @@ class arrival_process:
 
             # In the case of a poisson arrival process
             if self.symbol == "M":
-                # Draw IAT and ST
+                # determine the inter-arrival time and checkout
                 IAT = simulation.queue.A.get_IAT()
-                ST = simulation.queue.S.get_ST()
-
-                # Move time one IAT forward
                 yield environment.timeout(IAT)
 
+                # determine the arrival time
                 AT = environment.now - environment.epoch
 
                 # Create a customer
                 customer_new = customer(environment, simulation)
 
                 # Make the customer go through the system
-                environment.process(customer_new.move(IAT, AT, ST))
+                environment.process(customer_new.move(IAT, AT))
 
     def get_IAT(self):
         """

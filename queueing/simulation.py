@@ -112,12 +112,12 @@ class simulation:
             self.log["ITS"].append(max([AT - self.log["TSE"][-2], 0]))  # todo: check
 
     def return_log(self, filename=None):
-        """
-        Return the log in the form of a pandas dataframe.
+        """Return the log in the form of a pandas dataframe.
+        
         If a filename is specified, the results will be saved in the working folder as a .csv file.
         """
 
-        dataframe = pd.DataFrame.from_dict(self.log)
+        dataframe = pd.DataFrame.from_dict(self.log).set_index("c")
 
         if filename:
             if ".csv" not in filename:
@@ -141,7 +141,5 @@ class simulation:
             )
         )
         print(
-            "The mean service time is: {:04.2f} seconds".format(
-                np.mean(np.array([self.log["TSE"]]) - np.array([self.log["TSB"]]))
-            )
+            "The mean service time is: {:04.2f} seconds".format(np.mean(self.log["ST"]))
         )

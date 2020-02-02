@@ -14,8 +14,8 @@ class queue:
     """
 
     def __init__(self, A, S, c, K=np.inf, N=np.inf, D="FIFO", customers=[]):
-        """
-        Initialization
+        """Initialization
+        
         The first six inputs are the typical Kendall inputs.
         In case the simulation type is 'stochastic' A and S should be distributions from which separate instances can
         be drawn. When the simulation type is 'deterministic' A and S should be equal length lists with values for
@@ -48,8 +48,7 @@ class queue:
 
     @property
     def utilization(self):
-        """
-        Returns the utilization.
+        """Returns the utilization.
     
         If the utilization is larger than c the queue length will explode,
         become infinitely long.
