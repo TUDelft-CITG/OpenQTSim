@@ -30,7 +30,8 @@ class arrival_process:
         while simulation.customer_nr < simulation.maxarrivals:
             # In the case of a poisson arrival process
             if self.symbol == "M":
-                # Draw IAT and ST
+                # Draw IAT and ST from the exponential distribution
+                # todo: we should probably 'draw' ST in 'service_process' (that would help to separate between Kendall letters)
                 IAT = simulation.queue.A.get_IAT()
                 ST = simulation.queue.S.get_ST()
 
@@ -46,7 +47,8 @@ class arrival_process:
                 environment.process(customer_new.move(IAT, AT, ST))
 
             elif self.symbol == "D":
-                # Draw IAT and ST
+                # Draw IAT and ST from the input list
+                # todo: for the service systems example we should include quay length
                 id = simulation.queue.A.arrival_distribution.loc[simulation.customer_nr, ['name']].item()
                 IAT = simulation.queue.A.arrival_distribution.loc[simulation.customer_nr, ['IAT']].item()
                 ST = simulation.queue.S.service_distribution.loc[simulation.customer_nr, ['ST']].item()
