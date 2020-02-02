@@ -43,7 +43,7 @@ class simulation:
         self.type = type
 
         self.log = {
-            "c": [],  # c = customer
+            "c_id": [],  # c_id = customer id
             "IAT": [],  # IAT = inter arrival time
             "ST": [],  # ST = service time
             "AT": [],  # AT = now + IAT
@@ -76,7 +76,7 @@ class simulation:
 
         self.environment.run()
 
-    def log_entry(self, customer_nr, IAT, AT, ST, TSB, TSE, QL):
+    def log_entry(self, customer_id, IAT, AT, ST, TSB, TSE, QL):
         """
         # the following items are logged per customer that enters the system:
         # c = customer
@@ -90,7 +90,7 @@ class simulation:
         # ITS = idle time of the server   
         """
 
-        self.log["c"].append(customer_nr)
+        self.log["c_id"].append(customer_id)
         self.log["IAT"].append(IAT)
         self.log["ST"].append(ST)
         self.log["AT"].append(AT)
@@ -98,7 +98,7 @@ class simulation:
         self.log["TSE"].append(TSE)
         self.log["TCWQ"].append(TSB - AT)
         self.log["TCSS"].append(TSE - AT)
-        if len(self.log["c"]) == 1:
+        if len(self.log["c_id"]) == 1:
             self.log["ITS"].append(IAT)  # the server will start idle until the first arrival
         else:
             self.log["ITS"].append(max([AT - self.log["TSE"][-2], 0]))  # todo: I don't think this works with multiple servers
@@ -126,35 +126,35 @@ class simulation:
         # https://www.youtube.com/watch?v=nDXD8oVelo4
         # https: // www.youtube.com / watch?v = QppldN - t4pQ
         # https: // www.supositorio.com / rcalc / rcalclite.htm
-        print('Average IAT: {:.2f} [seconds]'.format(np.sum(self.log["IAT"]) / (self.log["c"][-1] - 1)))
-        print('Average ST: {:.2f} [seconds]'.format(np.sum(self.log["ST"]) / self.log["c"][-1]))
+        print('Average IAT: {:.2f} [seconds]'.format(np.sum(self.log["IAT"]) / (len(self.log["c_id"]) - 1)))
+        print('Average ST: {:.2f} [seconds]'.format(np.sum(self.log["ST"]) / (len(self.log["c_id"]))))
         print('')
-        print('Total number of customers: {:.2f}'.format(self.log["c"][-1]))
-        av_arr = 3600/(np.sum(self.log["IAT"]) / (self.log["c"][-1] - 1))
-        av_ser = 3600/(np.sum(self.log["ST"]) / (self.log["c"][-1] - 1))
+        print('Total number of customers: {:.2f}'.format((len(self.log["c_id"]))))
+        av_arr = 3600/(np.sum(self.log["IAT"]) / ((len(self.log["c_id"]) - 1)))
+        av_ser = 3600/(np.sum(self.log["ST"]) / ((len(self.log["c_id"]) - 1)))
         print('Average nr arrivals: {:.2f} [# per hour]'.format(av_arr))
         print('Average nr services: {:.2f} [# per hour]'.format(av_ser))
         # print('Average nr people in the system: {:.2f}'.format(av_arr*(np.mean(self.log["TCSS"])/3600)))
 
         print('')
         print('Total waiting time: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"])))
-        print('Average waiting time of all customers: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"]) / self.log["c"][-1]))
+        print('Average waiting time of all customers: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"]) / (len(self.log["c_id"]))))
         print('Average waiting time of customers that waited: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"]) / np.sum(np.array(self.log["TCWQ"]) != 0)))
 
         print('')
         print('Probability of idle server (nobody in the system): {:.4f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
-        print('Probability that somebody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) != 0) / self.log["c"][-1]))
-        print('Probability that nobody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 0) / self.log["c"][-1]))
-        print('Probability that 1 person is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 1) / self.log["c"][-1]))
-        print('Probability that 2 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 2) / self.log["c"][-1]))
-        print('Probability that 3 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 3) / self.log["c"][-1]))
-        print('Probability that 9 persons are waiting (10 in system): {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 9) / self.log["c"][-1]))
+        print('Probability that somebody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) != 0) / (len(self.log["c_id"]))))
+        print('Probability that nobody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 0) / (len(self.log["c_id"]))))
+        print('Probability that 1 person is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 1) / (len(self.log["c_id"]))))
+        print('Probability that 2 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 2) / (len(self.log["c_id"]))))
+        print('Probability that 3 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 3) / (len(self.log["c_id"]))))
+        print('Probability that 9 persons are waiting (10 in system): {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 9) / (len(self.log["c_id"]))))
         print('')
         print('Total service time: {:.2f} [seconds]'.format(np.sum(self.log["ST"])))
         print('Average total time a customer spent in the system: {:.2f} [seconds]'.\
-              format(np.sum(self.log["TCSS"]) / self.log["c"][-1]))
+              format(np.sum(self.log["TCSS"]) / (len(self.log["c_id"]))))
         print('Average waiting time as a fraction of ST: {:.2f}'.format(np.mean(np.array(self.log["TCWQ"]))/np.mean(np.array(self.log["ST"]))))
         print('')
         print('System utilisation: {:.4f}'.format((\
-                                    ((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]) )))
+                                    ((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]))))
 
