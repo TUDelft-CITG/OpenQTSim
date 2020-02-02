@@ -2,7 +2,8 @@
 [ ![License: MIT](https://img.shields.io/badge/License-MIT-informational.svg)](https://github.com/TUDelft-CITG/OpenQTSim/blob/master/LICENSE.txt)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3251545.svg)](https://doi.org/10.5281/zenodo.3251545)
 
-[![CircleCI](https://circleci.com/gh/TUDelft-CITG/OpenQTSim.svg?style=svg&circle-token=fc95d870dc21fdf11e1ebc02f9defcd99212197a)](https://circleci.com/gh/TUDelft-CITG/OpenCLSim)
+[![CircleCI](https://circleci.com/gh/TUDelft-CITG/OpenQTSim.svg?style=svg&circle-token=fe7b8b4d1c30d69ef17df79ebd9e81c3e4823b7e)](https://circleci.com/gh/TUDelft-CITG/OpenQTSim)
+
 
 # OpenQTSim
 
