@@ -10,3 +10,5 @@ from .service_process import service_process
 from .queue import queue
 from .customer import customer
 from .simulation import simulation
+
+from .lookup_tables import *
