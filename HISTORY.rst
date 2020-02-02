@@ -2,8 +2,13 @@
 History
 =======
 
+v0.2.0 (2020-02-02)
+------------------
 
-v0.1.0 (2018-06-09)
+* Package renamed to OpenQTSim
+
+
+v0.1.0 (2019-06-09)
 ------------------
 
 * First version developed by Joris den Uijl
