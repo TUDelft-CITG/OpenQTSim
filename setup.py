@@ -34,8 +34,8 @@ tests_require = [
 ]
 
 setup(
-    author = "Joris den Uijl",
-    author_email = "jorisdenuijl@gmail.com",
+    author = "Mark van Koningsveld and Joris den Uijl",
+    author_email = "m.vankoningsveld@tudelft.nl",
     classifiers = [
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -46,17 +46,17 @@ setup(
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
     ],
-    description = "The queueing packages facilitates discrete event simulation of queues with a Kendall notation.",
+    description = "OpenQTSim facilitates discrete event simulation of queues with a Kendall notation.",
     install_requires = requires,
     long_description = "",  # README + '\n\n' + CHANGES,
     include_package_data = True,
     keywords = "Queueing Theory",
-    name = "queueing",
-    packages = find_packages(include=["queueing"]),
+    name = "OpenQTSim",
+    packages = find_packages(include=["openqtsim"]),
     setup_requires = setup_requirements,
     test_suite = "tests",
     tests_require = tests_require,
-    url = "https://github.com/TUDelft-CITG/Queueing-Theory",
+    url = "https://github.com/TUDelft-CITG/OpenQTSim",
     version = "0.1.0",
     zip_safe = False,
 )
