@@ -46,7 +46,6 @@ class arrival_process:
                 environment.process(customer_new.move(IAT, AT, ST))
 
 
-
     def get_IAT(self):
         """
         Return the service time based on the service time distribution.

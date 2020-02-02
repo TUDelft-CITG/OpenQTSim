@@ -78,10 +78,10 @@ class simulation:
 
     def log_entry(self, customer_nr, IAT, AT, ST, TSB, TSE, QL):
         """
-        Update the log based on the current timestamp.
+        # the following items are logged per customer that enters the system:
         # c = customer
         # IAT = inter arrival time
-        # AT = now + IAT
+        # AT = arrival time
         # ST = service time
         # TSB = time service begins
         # TCWQ = time customer waits in the queue
@@ -96,41 +96,22 @@ class simulation:
         self.log["AT"].append(AT)
         self.log["TSB"].append(TSB)
         self.log["TSE"].append(TSE)
-        self.log["TCWQ"].append(TSB - AT)  # todo: check
-        self.log["TCSS"].append(TSE - AT)  # todo: check
+        self.log["TCWQ"].append(TSB - AT)
+        self.log["TCSS"].append(TSE - AT)
         if len(self.log["c"]) == 1:
-            self.log["ITS"].append(IAT)  # todo: check
+            self.log["ITS"].append(IAT)  # the server will start idle until the first arrival
         else:
-            self.log["ITS"].append(max([AT - self.log["TSE"][-2], 0]))  # todo: check
-        self.log["QL"].append(QL)
-
-        # self.log["c"].append(self.customer_nr)
-        # self.log["IAT"].append(IAT)
-        # self.log["ST"].append(ST)
-        # if self.customer_nr == 1:
-        #     self.log["AT"].append(0 + IAT)
-        # else:
-        #     self.log["AT"].append(self.log["AT"][-1] + IAT)
-        #
-        # if self.customer_nr == 1:
-        #     self.log["TSB"].append(self.log["AT"][-1])
-        # else:
-        #     self.log["TSB"].append(max([self.log["TSE"][-1], self.log["AT"][-1]]))
-        #
-        # self.log["TSE"].append(self.log["TSB"][-1] + ST)
-        # self.log["TCWQ"].append(self.log["TSB"][-1] - self.log["AT"][-1])  # todo: check
-        # self.log["TCSS"].append(self.log["TSE"][-1] - self.log["AT"][-1])  # todo: check
-        # if self.customer_nr == 1:
-        #     self.log["ITS"].append(0)  # todo: check
-        # else:
-        #     self.log["ITS"].append(max([self.log["AT"][-1] - self.log["TSE"][-2], 0]))  # todo: check
+            self.log["ITS"].append(max([AT - self.log["TSE"][-2], 0]))  # todo: I don't think this works with multiple servers
+        self.log["QL"].append(QL)  # this is monitored by using the custom class MonitoredResource defined above
 
     def return_log(self, nr_of_records_to_display=0, to_csv=False):
         """
-        Return the log in the form of a pandas data frame.
-        
+        Return the log in the form of a pandas data frame. The input 'nr_of_records_to_display' determines
+        how many records are displayed starting from 1. If set to 0 all records are displayed.
+
         If to_csv is True, a .csv file will be saved with the name "simulation_results.csv"
         """
+
         if nr_of_records_to_display == 0:
             dataframe = pd.DataFrame.from_dict(self.log)
         else:

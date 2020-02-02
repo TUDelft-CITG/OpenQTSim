@@ -13,10 +13,10 @@ class queue:
     - D is the queue discipline
     """
 
-    def __init__(self, A, S, c, K=np.inf, N=np.inf, D="FIFO", customers=[]):
+    def __init__(self, A, S, c, K=np.inf, N=np.inf, D="FIFO"):
         """
-        Initialization
         The first six inputs are the typical Kendall inputs.
+
         In case the simulation type is 'stochastic' A and S should be distributions from which separate instances can
         be drawn. When the simulation type is 'deterministic' A and S should be equal length lists with values for
         inter arrival times and service times. These will then one by one be picked in the simulation. Optional is to
@@ -30,7 +30,6 @@ class queue:
         self.K = K
         self.N = N
         self.D = D
-        self.customers = customers
 
         # if 1 < self.utilization:
         #     raise AssertionError(
@@ -56,8 +55,9 @@ class queue:
     #     become infinitely long.
     #
     #     For an M/M/c queue:
-    #     The queue utilazation (rho) is equal to arrival rate (lambda)
-    #     multiplied with the mean service time (E(S)).
+    #     The queue utilization (rho) is equal to arrival rate (lambda)
+    #     multiplied with the mean service time (E(S)). Or just the arrival rate mu
+    #     divided by service rate lambda
     #     """
     #
     #     if (
