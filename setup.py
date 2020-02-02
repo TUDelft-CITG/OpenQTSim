@@ -21,7 +21,8 @@ requires = [
     "pandas",
     "numpy",
     "simpy",
-    "scipy"
+    "scipy",
+    "sphinx_rtd_theme"
 ]
 
 setup_requirements = [
