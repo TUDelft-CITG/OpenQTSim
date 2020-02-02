@@ -15,12 +15,12 @@ class service_process:
 
         self.symbol = symbol
         self.service_distribution = service_distribution
-        self.service_rate = 1. / self.service_distribution.mean()
+        self.service_rate = 1.0 / self.service_distribution.mean()
         self.mean_service_time = self.service_distribution.mean()
 
     def get_ST(self):
         """
         Return the service time based on the service time distribution.
         """
-        
+
         return self.service_distribution.rvs()

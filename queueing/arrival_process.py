@@ -18,7 +18,7 @@ class arrival_process:
 
         self.symbol = symbol
         self.arrival_distribution = arrival_distribution
-        self.arrival_rate = 1. / self.arrival_distribution.mean()
+        self.arrival_rate = 1.0 / self.arrival_distribution.mean()
         self.mean_arrival_rate = self.arrival_distribution.mean()
 
     def arrival(self, environment, simulation):
@@ -27,7 +27,12 @@ class arrival_process:
         according to the distribution of the arrival process.
         Each time step is basically a new customer (so time equals customers)
         """
-        while simulation.customer_nr < simulation.maxarrivals:
+
+        while True:
+
+            if simulation.max_arrivals < simulation.customer_nr:
+                break
+
             # In the case of a poisson arrival process
             if self.symbol == "M":
                 # Draw IAT and ST
@@ -44,8 +49,6 @@ class arrival_process:
 
                 # Make the customer go through the system
                 environment.process(customer_new.move(IAT, AT, ST))
-
-
 
     def get_IAT(self):
         """

@@ -32,10 +32,9 @@ class queue:
         self.D = D
         self.customers = customers
 
-        # if 1 < self.utilization:
-        #     raise AssertionError(
-        #         "1 < Utilization. \nIf the utilization is larger than the number of servers the queue length will become infinitely long"
-        #     )
+        assert (
+            self.utilization <= 1
+        ), "1 < Utilization. \nIf the utilization is larger than the number of servers the queue length will become infinitely long"
 
     @property
     def kendall_notation(self):
@@ -47,24 +46,25 @@ class queue:
             self.A.symbol, self.S.symbol, str(self.c), str(self.K), str(self.N), self.D
         )
 
-    # @property
-    # def utilization(self):
-    #     """
-    #     Returns the utilization.
-    #
-    #     If the utilization is larger than c the queue length will explode,
-    #     become infinitely long.
-    #
-    #     For an M/M/c queue:
-    #     The queue utilazation (rho) is equal to arrival rate (lambda)
-    #     multiplied with the mean service time (E(S)).
-    #     """
-    #
-    #     if (
-    #         self.kendall_notation[:3] == "M/M"
-    #         and self.kendall_notation[-12:] == "inf/inf/FIFO"
-    #     ):
-    #         return (self.A.arrival_rate) / ((self.S.service_rate) * self.c)
+    @property
+    def utilization(self):
+        """
+        Returns the utilization.
+    
+        If the utilization is larger than c the queue length will explode,
+        become infinitely long.
+    
+        For an M/M/c queue:
+        The queue utilazation (rho) is equal to arrival rate (lambda)
+        multiplied with the mean service time (E(S)).
+        """
+
+        if (
+            self.kendall_notation[:3] == "M/M"
+            and self.kendall_notation[-12:] == "inf/inf/FIFO"
+        ):
+            return (self.A.arrival_rate) / ((self.S.service_rate) * self.c)
+
     #
     # @property
     # def delay_probability(self):

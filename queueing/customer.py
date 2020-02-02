@@ -1,5 +1,6 @@
 import random
 
+
 class customer:
     """
     Generate customers based on the arrival process.
@@ -18,8 +19,11 @@ class customer:
         self.customer_nr = simulation.customer_nr
 
     def move(self, IAT, AT, ST):
-        # draw IAT and ST from distributions
-        # inter_arrival_time = random.expovariate(self.arrival_rate)
+        """
+        Move trough the queue.
+        The inter arrival time and service times have been drawn from the specified distributions.
+        If the server is busy, time is moved forward until the customer can be served.
+        """
 
         # request access to server
         with self.environment.servers.request() as my_turn:
@@ -28,7 +32,7 @@ class customer:
             # determine TSB
             TSB = self.environment.now - self.environment.epoch
             yield self.environment.timeout(ST)
+
             TSE = self.environment.now - self.environment.epoch
 
             self.simulation.log_entry(self.customer_nr, IAT, AT, ST, TSB, TSE)
-
