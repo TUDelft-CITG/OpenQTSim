@@ -127,6 +127,18 @@ class simulation:
 
         return dataframe
 
+    def get_queue_info(self):
+        """ Determine additional info on the queue.
+        
+        Based on the logs per customer, define the number of customers 
+        in the queue and in the systems at any time.
+        """
+
+        assert self.environment.now != self.environment.epoch, "Simulation has not started yet."
+
+        for time in self.env.now - self.environment.epoch:
+            return 0
+
     def get_stats(self):
         """ Return the statistics of the simulation """
 
