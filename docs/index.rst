@@ -10,7 +10,7 @@ Welcome to OpenQTSim documentation! Please check the contents below for informat
    :caption: Contents:
 
    installation
-   opentisim
+   openqtsim
    contributing
    authors
    history
