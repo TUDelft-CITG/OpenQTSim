@@ -48,6 +48,30 @@ class arrival_process:
                 # Make the customer go through the system
                 environment.process(customer_new.move(IAT, AT))
 
+            elif self.symbol == "D":
+                # Draw IAT and ST
+                id = simulation.queue.A.arrival_distribution.loc[
+                    simulation.customer_nr, ["name"]
+                ].item()
+                IAT = simulation.queue.A.arrival_distribution.loc[
+                    simulation.customer_nr, ["IAT"]
+                ].item()
+                ST = simulation.queue.S.service_distribution.loc[
+                    simulation.customer_nr, ["ST"]
+                ].item()
+
+                # Move time one IAT forward
+                print(IAT)
+                yield environment.timeout(IAT)
+
+                AT = environment.now - environment.epoch
+
+                # Create a customer
+                customer_new = customer(environment, simulation, customer_id=id)
+
+                # Make the customer go through the system
+                environment.process(customer_new.move(IAT, AT, ST))
+
     def get_IAT(self):
         """
         Return the service time based on the service time distribution.

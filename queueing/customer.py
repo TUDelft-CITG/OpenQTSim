@@ -6,7 +6,7 @@ class customer:
     Generate customers based on the arrival process.
     """
 
-    def __init__(self, environment, simulation):
+    def __init__(self, environment, simulation, customer_id=[]):
         """
         Initialization
         """
@@ -17,6 +17,10 @@ class customer:
 
         simulation.customer_nr += 1
         self.customer_nr = simulation.customer_nr
+        if len(customer_id) == 0:
+            self.customer_id = simulation.customer_nr
+        else:
+            self.customer_id = customer_id
 
     def move(self, IAT, AT):
         """
@@ -39,4 +43,8 @@ class customer:
             # determine the time service ends
             TSE = self.environment.now - self.environment.epoch
 
-            self.simulation.log_entry(self.customer_nr, IAT, AT, ST, TSB, TSE)
+            # determine the queue length
+            QL = self.environment.servers.data[-1][1]
+
+            # log results
+            self.simulation.log_entry(self.customer_id, IAT, AT, ST, TSB, TSE, QL)
