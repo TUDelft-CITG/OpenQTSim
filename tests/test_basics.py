@@ -14,7 +14,7 @@ def test_lookup_table_1():
     factor = queue.occupancy_to_waitingfactor(utilisation, nr_of_servers)
     answer = 8.998295524474928
 
-    np.testing.assert_equal(factor, answer)
+    np.testing.assert_almost_equal(factor, answer)
 
 def test_lookup_table_2():
     queue = openqtsim.Queue()
@@ -25,4 +25,4 @@ def test_lookup_table_2():
     factor = queue.waitingfactor_to_occupancy(factor, nr_of_servers)
     answer = 0.493062176851717
 
-    np.testing.assert_equal(factor, answer)
+    np.testing.assert_almost_equal(factor, answer)
