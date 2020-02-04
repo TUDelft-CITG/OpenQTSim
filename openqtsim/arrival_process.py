@@ -18,7 +18,6 @@ class ArrivalProcess:
 
         if self.symbol == "M":
             aver_IAT_in_t_scale = (1 * self.t_scale)/arr_rate
-            print(aver_IAT_in_t_scale)
             self.arrival_distribution = stats.expon(scale=aver_IAT_in_t_scale)
 
     def get_IAT(self):

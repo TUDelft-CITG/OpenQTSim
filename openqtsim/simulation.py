@@ -132,10 +132,16 @@ class Simulation:
         # https://www.youtube.com/watch?v=nDXD8oVelo4
         # https: // www.youtube.com / watch?v = QppldN - t4pQ
         # https: // www.supositorio.com / rcalc / rcalclite.htm
-        print('Average IAT: {:.2f} [hours]'.format((np.sum(self.log["IAT"])/self.t_scale)/(len(self.log["c_id"]) - 1)))
-        print('Average ST: {:.2f} [hours]'.format((np.sum(self.log["ST"])/self.t_scale) / (len(self.log["c_id"]))))
+        print('Average IAT: {:.4f} [hours]'.format((np.sum(self.log["IAT"])/self.t_scale)/(len(self.log["c_id"]))))
+        print('Average ST: {:.4f} [hours]'.format((np.sum(self.log["ST"])/self.t_scale) / (len(self.log["c_id"]))))
+        print('Rho: System utilisation: {:.4f}'.format((\
+                                    ((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]))))
         print('')
         print('Total number of customers: {:.2f}'.format((len(self.log["c_id"]))))
+        print('')
+        print('W_s: Average time spent in the system: {:.2f} [hours]'.format((np.mean(self.log["TCSS"])/self.t_scale)))
+        print('W_q: Average time spent in the queue: {:.2f} [hours]'.format((np.mean(self.log["TCWQ"])/self.t_scale)))
+
         av_arr = 3600/(np.sum(self.log["IAT"]) / (len(self.log["c_id"]) - 1))
         av_ser = 3600/(np.sum(self.log["ST"]) / (len(self.log["c_id"]) - 1))
         # print('Average nr arrivals: {:.2f} [# per hour]'.format(av_arr))
@@ -143,7 +149,7 @@ class Simulation:
         # print('Average nr people in the system: {:.2f}'.format(av_arr*(np.mean(self.log["TCSS"])/3600)))
 
         print('')
-        print('Total waiting time: {:.2f} [seconds]'.format(np.sum(self.log["TCWQ"])/self.t_scale))
+        print('Total waiting time: {:.4f} [hours]'.format(np.sum(self.log["TCWQ"])/self.t_scale))
         print('Average waiting time of all customers: {:.2f} [hours]'.format((np.sum(self.log["TCWQ"])/self.t_scale) / (len(self.log["c_id"]))))
         print('Average waiting time of customers that waited: {:.2f} [hours]'.format((np.sum(self.log["TCWQ"])/self.t_scale) / np.sum(np.array(self.log["TCWQ"]) != 0)))
 
@@ -161,6 +167,4 @@ class Simulation:
         #       format(np.sum(self.log["TCSS"]) / (len(self.log["c_id"]))))
         print('Average waiting time as a fraction of ST: {:.2f}'.format(np.mean(np.array(self.log["TCWQ"]))/np.mean(np.array(self.log["ST"]))))
         print('')
-        print('System utilisation: {:.4f}'.format((\
-                                    ((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]))))
 

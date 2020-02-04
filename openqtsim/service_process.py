@@ -18,7 +18,6 @@ class ServiceProcess:
 
         if self.symbol == "M":
             aver_ST_in_t_scale = (1 * self.t_scale)/srv_rate
-            print(aver_ST_in_t_scale)
             self.service_distribution = stats.expon(scale=aver_ST_in_t_scale)
 
     def get_ST(self):

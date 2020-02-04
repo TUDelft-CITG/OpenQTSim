@@ -40,8 +40,8 @@ class Queue:
         IAT_LT_ac = np.inf
         ST_LT_ac = np.inf
 
-        # or IAT_LT_ac > Sim.IAT_tol and ST_LT_ac > Sim.ST_tol
-        while Sim.customer_nr < Sim.max_arr:
+        #
+        while Sim.customer_nr < Sim.max_arr and (IAT_LT_ac > Sim.IAT_tol or ST_LT_ac > Sim.ST_tol):
             # --- Create a customer
             # draw IAT from distribution and move time forward
             IAT = Sim.queue.A.get_IAT()
@@ -63,12 +63,12 @@ class Queue:
                 ST_LT_ac = np.abs((np.mean(Sim.log["ST"]) / Sim.t_scale) -
                                   Sim.queue.S.service_distribution.mean()/Sim.t_scale)
 
+        print('Nr of customers: {}'.format(Sim.customer_nr))
         print('Accuracy IAT: {}'.format(IAT_LT_ac))
         print('Tolerance: {}'.format(Sim.IAT_tol))
-        print(IAT_LT_ac > Sim.IAT_tol)
         print('Accuracy ST: {}'.format(ST_LT_ac))
         print('Tolerance: {}'.format(Sim.ST_tol))
-        print(ST_LT_ac > Sim.ST_tol)
+        print('')
 
     @property
     def kendall_notation(self):
