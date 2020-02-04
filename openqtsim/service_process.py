@@ -1,4 +1,5 @@
 from scipy import stats
+import pandas as pd
 
 
 class ServiceProcess:
@@ -8,9 +9,11 @@ class ServiceProcess:
     - scipy.stats probility distribution of service times
     """
 
-    def __init__(self, symbol, srv_rate, t_scale=3600):
+    def __init__(self, symbol='M', srv_rate=9, t_scale=1):
         """
-        srv_rate is in services per hour
+        srv_rate is in services per hour (corresponding to t_scale = 1)
+        t_scale 1: hours, 60: minutes, 3600: seconds, etc
+        select t_scale = 3600 if you want the simulation to be in seconds
         """
 
         self.symbol = symbol
@@ -20,9 +23,17 @@ class ServiceProcess:
             aver_ST_in_t_scale = (1 * self.t_scale)/srv_rate
             self.service_distribution = stats.expon(scale=aver_ST_in_t_scale)
 
-    def get_ST(self):
+        elif self.symbol == "D":
+            self.service_distribution = srv_rate
+
+    def get_ST(self, customer_nr=[]):
         """
         Return the service time based on the service time distribution.
         """
 
-        return self.service_distribution.rvs()
+        if self.symbol == "M":
+            return self.service_distribution.rvs(), customer_nr
+
+        elif self.symbol == "D":
+            return self.service_distribution.loc[customer_nr, ['ST']].item(), \
+                   self.service_distribution.loc[customer_nr, ['name']].item()

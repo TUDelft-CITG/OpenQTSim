@@ -28,7 +28,7 @@ class Customer:
             TSB = self.Env.now - self.Env.epoch
 
             # get ST
-            ST = self.Sim.queue.S.get_ST()
+            ST, customer_id = self.Sim.queue.S.get_ST(self.customer_nr)
 
             # more time ST forward
             yield self.Env.timeout(ST)
@@ -42,7 +42,7 @@ class Customer:
             # register QL at TSE
             QL = self.Env.servers.data[-1][1]
 
-            self.Sim.log_entry(self.customer_nr, IAT, AT, ST, TSB, TSE, QL)
+            self.Sim.log_entry(customer_id, IAT, AT, ST, TSB, TSE, QL)
 
 
 

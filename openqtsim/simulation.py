@@ -26,7 +26,7 @@ class Simulation:
     - seed is a random seed to have retraceable simulations
     """
 
-    def __init__(self, queue, max_arr=100, IAT_tol=0.001, ST_tol=0.001, priority=False, seed=4, t_scale=3600):
+    def __init__(self, queue, max_arr=100, IAT_tol=0.001, ST_tol=0.001, priority=False, seed=4, t_scale=1):
         """
         Initialization the basic time unit is hours. Timescaling multiplies
         """
@@ -133,19 +133,18 @@ class Simulation:
         # https: // www.youtube.com / watch?v = QppldN - t4pQ
         # https: // www.supositorio.com / rcalc / rcalclite.htm
         print('Average IAT: {:.4f} [hours]'.format((np.sum(self.log["IAT"])/self.t_scale)/(len(self.log["c_id"]))))
-        print('Average ST: {:.4f} [hours]'.format((np.sum(self.log["ST"])/self.t_scale) / (len(self.log["c_id"]))))
-        print('Rho: System utilisation: {:.4f}'.format((\
-                                    ((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]))))
+        print('Average ST: {:.4f} [hours]'.format((np.sum(self.log["ST"])/self.t_scale)/(len(self.log["c_id"]))))
+        print('Rho: System utilisation: {:.4f}'.format((((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]))))
         print('')
         print('Total number of customers: {:.2f}'.format((len(self.log["c_id"]))))
         print('')
         print('W_s: Average time spent in the system: {:.2f} [hours]'.format((np.mean(self.log["TCSS"])/self.t_scale)))
         print('W_q: Average time spent in the queue: {:.2f} [hours]'.format((np.mean(self.log["TCWQ"])/self.t_scale)))
 
-        av_arr = 3600/(np.sum(self.log["IAT"]) / (len(self.log["c_id"]) - 1))
-        av_ser = 3600/(np.sum(self.log["ST"]) / (len(self.log["c_id"]) - 1))
-        # print('Average nr arrivals: {:.2f} [# per hour]'.format(av_arr))
-        # print('Average nr services: {:.2f} [# per hour]'.format(av_ser))
+        av_arr = self.t_scale/(np.sum(self.log["IAT"]) / (len(self.log["c_id"]) - 1))
+        av_ser = self.t_scale/(np.sum(self.log["ST"]) / (len(self.log["c_id"]) - 1))
+        print('Average nr arrivals: {:.2f} [# per hour]'.format(av_arr))
+        print('Average nr services: {:.2f} [# per hour]'.format(av_ser))
         # print('Average nr people in the system: {:.2f}'.format(av_arr*(np.mean(self.log["TCSS"])/3600)))
 
         print('')
@@ -154,13 +153,13 @@ class Simulation:
         print('Average waiting time of customers that waited: {:.2f} [hours]'.format((np.sum(self.log["TCWQ"])/self.t_scale) / np.sum(np.array(self.log["TCWQ"]) != 0)))
 
         print('')
-        print('Probability of idle server (nobody in the system): {:.4f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
+        print('P_0: Probability of idle server (nobody in the system): {:.4f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
         print('Probability that somebody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) != 0) / (len(self.log["c_id"]))))
         print('Probability that nobody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 0) / (len(self.log["c_id"]))))
-        print('Probability that 1 person is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 1) / (len(self.log["c_id"]))))
-        print('Probability that 2 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 2) / (len(self.log["c_id"]))))
-        print('Probability that 3 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 3) / (len(self.log["c_id"]))))
-        print('Probability that 9 persons are waiting (10 in system): {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 9) / (len(self.log["c_id"]))))
+        print('P_2: Probability that 1 person is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 1) / (len(self.log["c_id"]))))
+        print('P_3: Probability that 2 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 2) / (len(self.log["c_id"]))))
+        print('P_4: Probability that 3 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 3) / (len(self.log["c_id"]))))
+        print('P_10: Probability that 9 persons are waiting (10 in system): {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 9) / (len(self.log["c_id"]))))
         print('')
         # print('Total service time: {:.2f} [seconds]'.format(np.sum(self.log["ST"])))
         # print('Average total time a customer spent in the system: {:.2f} [seconds]'.\

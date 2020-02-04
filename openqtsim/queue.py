@@ -1,6 +1,9 @@
 import numpy as np
 import pandas as pd
+
 from openqtsim.customer import Customer
+from openqtsim.arrival_process import ArrivalProcess
+from openqtsim.service_process import ServiceProcess
 
 
 class Queue:
@@ -14,9 +17,9 @@ class Queue:
     - D is the queue discipline
     """
 
-    def __init__(self, A, S, c, K=np.inf, N=np.inf, D="FIFO"):
+    def __init__(self, A=ArrivalProcess(), S=ServiceProcess(), c=1, K=np.inf, N=np.inf, D="FIFO"):
         """
-        The first six inputs are the typical Kendall inputs.
+        The first six inputs are the typical Kendall inputs. Without inputs the queue object returns an M/M/1 object.
 
         In case the simulation type is 'stochastic' A and S should be distributions from which separate instances can
         be drawn. When the simulation type is 'deterministic' A and S should be equal length lists with values for
@@ -39,35 +42,46 @@ class Queue:
         """
         IAT_LT_ac = np.inf
         ST_LT_ac = np.inf
+        if Sim.queue.A.symbol == 'D':
+            Sim.IAT_tol = 0
+            Sim.max_arr = np.min([Sim.max_arr, len(Sim.queue.A.arrival_distribution['IAT'])-1])
+        if Sim.queue.S.symbol == 'D':
+            Sim.ST_tol = 0
+            Sim.max_arr = np.min([Sim.max_arr, len(Sim.queue.S.service_distribution['ST'])-1])
 
-        #
+        # simulation stops either when max arrivals (max_arr) is reached or the tolerance limits are achieved
         while Sim.customer_nr < Sim.max_arr and (IAT_LT_ac > Sim.IAT_tol or ST_LT_ac > Sim.ST_tol):
-            # --- Create a customer
-            # draw IAT from distribution and move time forward
-            IAT = Sim.queue.A.get_IAT()
+
+            # draw IAT from distribution, move time forward and register arrival time (AT)
+            IAT = Sim.queue.A.get_IAT(Sim.customer_nr)  # + 1 for the next customer
 
             yield Env.timeout(IAT)
 
             AT = Env.now - Env.epoch
 
+            # Create a customer
             customer_new = Customer(Env, Sim)
 
             # Make the customer go through the system
             Env.process(customer_new.move(IAT, AT))
 
-            if len(Sim.log["ST"])>1:
+            # Calculate for IAT how accurate the simulation mean matches with the distribution mean
+            if len(Sim.log["IAT"]) >= 1 and not Sim.queue.A.symbol == 'D':
                 IAT_LT_ac = np.abs((np.mean(Sim.log["IAT"]) / Sim.t_scale) -
                                    Sim.queue.A.arrival_distribution.mean()/Sim.t_scale)
 
-            if len(Sim.log["ST"])>1:
+            # Calculate for ST how accurate the simulation mean matches with the distribution mean
+            if len(Sim.log["ST"]) >= 1 and not Sim.queue.S.symbol == 'D':
                 ST_LT_ac = np.abs((np.mean(Sim.log["ST"]) / Sim.t_scale) -
                                   Sim.queue.S.service_distribution.mean()/Sim.t_scale)
 
+        # Print brief simulation report
         print('Nr of customers: {}'.format(Sim.customer_nr))
-        print('Accuracy IAT: {}'.format(IAT_LT_ac))
-        print('Tolerance: {}'.format(Sim.IAT_tol))
-        print('Accuracy ST: {}'.format(ST_LT_ac))
-        print('Tolerance: {}'.format(Sim.ST_tol))
+        if not Sim.queue.A.symbol == 'D':
+            print('Accuracy IAT: {}'.format(IAT_LT_ac))
+            print('Tolerance: {}'.format(Sim.IAT_tol))
+            print('Accuracy ST: {}'.format(ST_LT_ac))
+            print('Tolerance: {}'.format(Sim.ST_tol))
         print('')
 
     @property
@@ -80,96 +94,29 @@ class Queue:
             self.A.symbol, self.S.symbol, str(self.c), str(self.K), str(self.N), self.D
         )
 
-    # @property
-    # def utilization(self):
-    #     """
-    #     Returns the utilization.
-    #
-    #     If the utilization is larger than c the queue length will explode,
-    #     become infinitely long.
-    #
-    #     For an M/M/c queue:
-    #     The queue utilization (rho) is equal to arrival rate (lambda)
-    #     multiplied with the mean service time (E(S)). Or just the arrival rate mu
-    #     divided by service rate lambda
-    #     """
-    #
-    #     if (
-    #         self.kendall_notation[:3] == "M/M"
-    #         and self.kendall_notation[-12:] == "inf/inf/FIFO"
-    #     ):
-    #         return (self.A.arrival_rate) / ((self.S.service_rate) * self.c)
-    #
-    # @property
-    # def delay_probability(self):
-    #     """
-    #     Returns the delay probability
-    #     """
-    #     # Try to vectorize this
-    #     part_1 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
-    #
-    #     part_2 = 0
-    #     for n in range(self.c):
-    #         part_2 += ((self.c * self.utilization) ** n) / np.math.factorial(n)
-    #
-    #     part_3 = ((self.c * self.utilization) ** self.c) / np.math.factorial(self.c)
-    #
-    #     return part_1 / ((1 - self.utilization) * part_2 + part_3)
-    #
-    #
-    # @property
-    # def mean_queue_length(self):
-    #     """
-    #     Returns the mean queue length, E(L).
-    #
-    #     For an M/M/c queue:
-    #
-    #     """
-    #
-    #     if (
-    #         self.kendall_notation[:3] == "M/M"
-    #         and self.kendall_notation[-12:] == "inf/inf/FIFO"
-    #     ):
-    #         return self.delay_probability * (self.utilization / (1 - self.utilization))
-    #
-    # @property
-    # def mean_waiting_time(self):
-    #     """
-    #     Returns the mean waiting time, E(W).
-    #
-    #     For an M/M/c queue:
-    #
-    #     """
-    #
-    #     if (
-    #         self.kendall_notation[:3] == "M/M"
-    #         and self.kendall_notation[-12:] == "inf/inf/FIFO"
-    #     ):
-    #         return (
-    #             self.delay_probability
-    #             * (1 / (1 - self.utilization))
-    #             * (1 / (self.c * (self.S.service_rate)))
-    #         )
-    #
-    # def steady_state_stats(self):
-    #     """
-    #     Return the steady state solutions.
-    #     """
-    #
-    #     return pd.DataFrame.from_dict(
-    #         {
-    #             "Mean queue length": self.mean_queue_length,
-    #             "Mean waiting time": self.mean_waiting_time,
-    #         }
-    #     )
-
-    def occupancy_to_waitingfactor(self, utilisation=.3, nr_of_servers_to_chk=4, poly_order=6, kendall='E2/E2/n'):
+    def occupancy_to_waitingfactor(self, utilisation=.3, nr_of_servers_to_chk=4, poly_order=6):
         """Waiting time factor (E2/E2/n or M/E2/n) queueing theory using 6th order polynomial regression)"""
 
         kendall = "{}/{}/{}".format(self.A.symbol, self.S.symbol, str(self.c))
 
-        if kendall == 'E2/E2/n':
-            # Create dataframe with data from Groenveld (2007) - Table V
+        if kendall[0:4] == 'M/M/':
+            # Create dataframe with data from Groenveld (2007) - Table I (M/M/n)
+            # See also PIANC 2014 Table 6.2
+            utilisations = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9])
+            nr_of_servers = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+            data = np.array([
+                [0.1111, 0.0101, 0.0014, 0.0002, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000],
+                [0.2500, 0.0417, 0.0103, 0.0030, 0.0010, 0.0003, 0.0001, 0.0000, 0.0000, 0.0000],
+                [0.4286, 0.0989, 0.0333, 0.0132, 0.0058, 0.0027, 0.0013, 0.0006, 0.0003, 0.0002],
+                [0.6667, 0.1905, 0.0784, 0.0378, 0.0199, 0.0111, 0.0064, 0.0039, 0.0024, 0.0015],
+                [1.0000, 0.3333, 0.1579, 0.0870, 0.0521, 0.0330, 0.0218, 0.0148, 0.0102, 0.0072],
+                [1.5000, 0.5625, 0.2956, 0.1794, 0.1181, 0.0819, 0.0589, 0.0436, 0.0330, 0.0253],
+                [2.3333, 0.9608, 0.5470, 0.3572, 0.2519, 0.1867, 0.1432, 0.1128, 0.0906, 0.0739],
+                [4.0000, 1.7778, 1.0787, 0.7455, 0.5541, 0.4315, 0.3471, 0.2860, 0.2401, 0.2046],
+                [9.0000, 4.2632, 2.7235, 1.9693, 1.5250, 1.2335, 1.0285, 0.8769, 0.7606, 0.6687]])
+
+        if kendall[0:6] == 'E2/E2/':
+            # Create dataframe with data from Groenveld (2007) - Table V (
             # See also PIANC 2014 Table 6.2
             utilisations = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9])
             nr_of_servers = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
