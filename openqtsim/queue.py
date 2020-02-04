@@ -19,13 +19,8 @@ class Queue:
 
     def __init__(self, A=ArrivalProcess(), S=ServiceProcess(), c=1, K=np.inf, N=np.inf, D="FIFO"):
         """
-        The first six inputs are the typical Kendall inputs. Without inputs the queue object returns an M/M/1 object.
-
-        In case the simulation type is 'stochastic' A and S should be distributions from which separate instances can
-        be drawn. When the simulation type is 'deterministic' A and S should be equal length lists with values for
-        inter arrival times and service times. These will then one by one be picked in the simulation. Optional is to
-        add a corresponding list of customer ids or names. This will not influence statistics but may make inspection
-        of the simulation outputs easier.
+        The first six inputs are the typical Kendall inputs. Without inputs the queue object returns an M/M/1 object as
+        default
         """
 
         self.A = A
@@ -38,8 +33,9 @@ class Queue:
     def populate(self, Env, Sim):
         """
         While the simulation time does not exceed the maximum duration, generate customers
-        according to the distribution of the arrival process to populate the queue.
+        according to the distribution of the arrival process to populate the queue
         """
+        # Prepare some variables before the while loop
         IAT_LT_ac = np.inf
         ST_LT_ac = np.inf
         if Sim.queue.A.symbol == 'D':
@@ -49,10 +45,10 @@ class Queue:
             Sim.ST_tol = 0
             Sim.max_arr = np.min([Sim.max_arr, len(Sim.queue.S.service_distribution['ST'])-1])
 
-        # simulation stops either when max arrivals (max_arr) is reached or the tolerance limits are achieved
+        # Simulation stops either when max arrivals (max_arr) is reached or the tolerance limits are achieved
         while Sim.customer_nr < Sim.max_arr and (IAT_LT_ac > Sim.IAT_tol or ST_LT_ac > Sim.ST_tol):
 
-            # draw IAT from distribution, move time forward and register arrival time (AT)
+            # Draw IAT from distribution, move time forward and register arrival time (AT)
             IAT = Sim.queue.A.get_IAT(Sim.customer_nr)  # + 1 for the next customer
 
             yield Env.timeout(IAT)
@@ -87,7 +83,7 @@ class Queue:
     @property
     def kendall_notation(self):
         """
-        Return queue according to the kendall notation.
+        Return queue name according to the Kendall notation.
         """
 
         return "{}/{}/{}/{}/{}/{}".format(
@@ -115,8 +111,8 @@ class Queue:
                 [4.0000, 1.7778, 1.0787, 0.7455, 0.5541, 0.4315, 0.3471, 0.2860, 0.2401, 0.2046],
                 [9.0000, 4.2632, 2.7235, 1.9693, 1.5250, 1.2335, 1.0285, 0.8769, 0.7606, 0.6687]])
 
-        if kendall[0:6] == 'E2/E2/':
-            # Create dataframe with data from Groenveld (2007) - Table V (
+        elif kendall[0:6] == 'E2/E2/':
+            # Create dataframe with data from Groenveld (2007) - Table V (E2/E2/n)
             # See also PIANC 2014 Table 6.2
             utilisations = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9])
             nr_of_servers = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
@@ -132,8 +128,8 @@ class Queue:
                 [4.3590, 2.0000, 1.2000, 0.9200, 0.6500, 0.5700, 0.4400, 0.4000, 0.3200, 0.3000]
             ])
 
-        elif kendall == 'M/E2/n':
-            # Create dataframe with data from Groenveld (2007) - Table IV
+        elif kendall[0:5] == 'M/E2/n':
+            # Create dataframe with data from Groenveld (2007) - Table IV (M/E2/n)
             # See also PIANC 2014 Table 6.1
             utilisations = np.array([.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .75, .8, .85, .9])
             nr_of_servers = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
@@ -160,7 +156,7 @@ class Queue:
         df = pd.DataFrame(data, index=utilisations, columns=nr_of_servers)
 
         # Create a 6th order polynomial fit through the data (for nr_of_stations_chk)
-        target = df.loc[:, nr_of_servers_to_chk]
+        target = df.loc[:, nr_of_servers_to_chk];
         p_p = np.polyfit(target.index, target.values, poly_order)
 
         waiting_factor = np.polyval(p_p, utilisation)
@@ -172,8 +168,26 @@ class Queue:
     def waitingfactor_to_occupancy(self, factor=.3, nr_of_servers_to_chk=4, poly_order=6):
         """Waiting time factor (E2/E2/n or M/E2/n) queueing theory using 6th order polynomial regression)"""
 
-        if kendall == 'E2/E2/n':
-            # Create dataframe with data from Groenveld (2007) - Table V
+        kendall = "{}/{}/{}".format(self.A.symbol, self.S.symbol, str(self.c))
+
+        if kendall[0:4] == 'M/M/':
+            # Create dataframe with data from Groenveld (2007) - Table I (M/M/n)
+            # See also PIANC 2014 Table 6.2
+            utilisations = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9])
+            nr_of_servers = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
+            data = np.array([
+                [0.1111, 0.0101, 0.0014, 0.0002, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000, 0.0000],
+                [0.2500, 0.0417, 0.0103, 0.0030, 0.0010, 0.0003, 0.0001, 0.0000, 0.0000, 0.0000],
+                [0.4286, 0.0989, 0.0333, 0.0132, 0.0058, 0.0027, 0.0013, 0.0006, 0.0003, 0.0002],
+                [0.6667, 0.1905, 0.0784, 0.0378, 0.0199, 0.0111, 0.0064, 0.0039, 0.0024, 0.0015],
+                [1.0000, 0.3333, 0.1579, 0.0870, 0.0521, 0.0330, 0.0218, 0.0148, 0.0102, 0.0072],
+                [1.5000, 0.5625, 0.2956, 0.1794, 0.1181, 0.0819, 0.0589, 0.0436, 0.0330, 0.0253],
+                [2.3333, 0.9608, 0.5470, 0.3572, 0.2519, 0.1867, 0.1432, 0.1128, 0.0906, 0.0739],
+                [4.0000, 1.7778, 1.0787, 0.7455, 0.5541, 0.4315, 0.3471, 0.2860, 0.2401, 0.2046],
+                [9.0000, 4.2632, 2.7235, 1.9693, 1.5250, 1.2335, 1.0285, 0.8769, 0.7606, 0.6687]])
+
+        elif kendall[0:6] == 'E2/E2/':
+            # Create dataframe with data from Groenveld (2007) - Table V (E2/E2/n)
             # See also PIANC 2014 Table 6.2
             utilisations = np.array([.1, .2, .3, .4, .5, .6, .7, .8, .9])
             nr_of_servers = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
@@ -188,8 +202,9 @@ class Queue:
                 [1.8653, 0.8300, 0.4600, 0.3300, 0.2300, 0.1900, 0.1400, 0.1200, 0.0900, 0.0900],
                 [4.3590, 2.0000, 1.2000, 0.9200, 0.6500, 0.5700, 0.4400, 0.4000, 0.3200, 0.3000]
             ])
-        elif kendall == 'M/E2/n':
-            # Create dataframe with data from Groenveld (2007) - Table IV
+
+        elif kendall[0:5] == 'M/E2/n':
+            # Create dataframe with data from Groenveld (2007) - Table IV (M/E2/n)
             # See also PIANC 2014 Table 6.1
             utilisations = np.array([.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .75, .8, .85, .9])
             nr_of_servers = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14])
@@ -218,7 +233,6 @@ class Queue:
         # Create a 6th order polynomial fit through the data (for nr_of_stations_chk)
         target = df.loc[:, nr_of_servers_to_chk]
         p_p = np.polyfit(target.values, target.index, poly_order)
-        print(p_p)
 
         occupancy = np.polyval(p_p, factor)
 
