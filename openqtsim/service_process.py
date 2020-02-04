@@ -5,7 +5,7 @@ class ServiceProcess:
     """
     Class to represent the arrival process:
     - symbol is the symbol of the process (M, E_k, etc.)
-    - scipy.stats probility distribution of service times
+    - scipy.stats for probability distribution of service times or a deterministic list
     """
 
     def __init__(self, symbol='M', srv_rate=9, t_scale=1):
@@ -27,7 +27,7 @@ class ServiceProcess:
 
     def get_ST(self, customer_nr=[]):
         """
-        Return the service time based on the service time distribution.
+        Return the service time based on the service time distribution or deterministic list
         """
 
         if self.symbol == "M":

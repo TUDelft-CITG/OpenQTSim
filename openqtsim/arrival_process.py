@@ -5,7 +5,7 @@ class ArrivalProcess:
     """
     Class to represent the arrival process:
     - symbol is the symbol of the process (M, E_k, etc.)
-    - scipy.stats probility distribution of arrival times
+    - scipy.stats for probability distribution of inter arrival times or a deterministic list
     """
 
     def __init__(self, symbol='M', arr_rate=8, t_scale=1):
@@ -13,7 +13,7 @@ class ArrivalProcess:
         arr_rate is in arrivals per hour (corresponding to t_scale = 1)
         t_scale 1: hours, 60: minutes, 3600: seconds, etc
         select t_scale = 3600 if you want the simulation to be in seconds
-         """
+        """
 
         self.symbol = symbol
         self.t_scale = t_scale
@@ -27,7 +27,7 @@ class ArrivalProcess:
 
     def get_IAT(self, customer_nr=[]):
         """
-        Return the service time based on the service time distribution.
+        Return the inter arrival time based on the inter arrival time distribution or deterministic list
         """
 
         if self.symbol == "M":
