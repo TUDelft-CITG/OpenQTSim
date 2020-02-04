@@ -1,68 +1,25 @@
-import random
 from scipy import stats
 
-from openqtsim.customer import customer
 
-
-class arrival_process:
+class ArrivalProcess:
     """
     Class to represent the arrival process:
     - symbol is the symbol of the process (M, E_k, etc.)
     - scipy.stats probility distribution of arrival times
     """
 
-    def __init__(self, symbol, arrival_distribution):
+    def __init__(self, symbol, arr_rate, t_scale=3600):
         """
-        Initialization
+        arr_rate is in arrivals per hour
         """
 
         self.symbol = symbol
-        self.arrival_distribution = arrival_distribution
-        self.arrival_rate = 1. / self.arrival_distribution.mean()
-        self.mean_arrival_rate = self.arrival_distribution.mean()
+        self.t_scale = t_scale
 
-    def arrival(self, environment, simulation):
-        """
-        While the simulation time does not exceed the maximum duration, generate customers
-        according to the distribution of the arrival process.
-        Each time step is basically a new customer (so time equals customers)
-        """
-        while simulation.customer_nr < simulation.maxarrivals:
-            # In the case of a poisson arrival process
-            if self.symbol == "M":
-                # Draw IAT and ST from the exponential distribution
-                # todo: we should probably 'draw' ST in 'service_process' (that would help to separate between Kendall letters)
-                IAT = simulation.queue.A.get_IAT()
-                ST = simulation.queue.S.get_ST()
-
-                # Move time one IAT forward
-                yield environment.timeout(IAT)
-
-                AT = environment.now - environment.epoch
-
-                # Create a customer
-                customer_new = customer(environment, simulation)
-
-                # Make the customer go through the system
-                environment.process(customer_new.move(IAT, AT, ST))
-
-            elif self.symbol == "D":
-                # Draw IAT and ST from the input list
-                # todo: for the service systems example we should include quay length
-                id = simulation.queue.A.arrival_distribution.loc[simulation.customer_nr, ['name']].item()
-                IAT = simulation.queue.A.arrival_distribution.loc[simulation.customer_nr, ['IAT']].item()
-                ST = simulation.queue.S.service_distribution.loc[simulation.customer_nr, ['ST']].item()
-
-                # Move time one IAT forward
-                yield environment.timeout(IAT)
-
-                AT = environment.now - environment.epoch
-
-                # Create a customer
-                customer_new = customer(environment, simulation, customer_id=id)
-
-                # Make the customer go through the system
-                environment.process(customer_new.move(IAT, AT, ST))
+        if self.symbol == "M":
+            aver_IAT_in_t_scale = (1 * self.t_scale)/arr_rate
+            print(aver_IAT_in_t_scale)
+            self.arrival_distribution = stats.expon(scale=aver_IAT_in_t_scale)
 
     def get_IAT(self):
         """

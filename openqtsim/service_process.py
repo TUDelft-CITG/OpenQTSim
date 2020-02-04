@@ -1,26 +1,29 @@
 from scipy import stats
 
 
-class service_process:
+class ServiceProcess:
     """
     Class to represent the arrival process:
     - symbol is the symbol of the process (M, E_k, etc.)
     - scipy.stats probility distribution of service times
     """
 
-    def __init__(self, symbol, service_distribution):
+    def __init__(self, symbol, srv_rate, t_scale=3600):
         """
-        Initialization
+        srv_rate is in services per hour
         """
 
         self.symbol = symbol
-        self.service_distribution = service_distribution
-        self.service_rate = 1. / self.service_distribution.mean()
-        self.mean_service_time = self.service_distribution.mean()
+        self.t_scale = t_scale
+
+        if self.symbol == "M":
+            aver_ST_in_t_scale = (1 * self.t_scale)/srv_rate
+            print(aver_ST_in_t_scale)
+            self.service_distribution = stats.expon(scale=aver_ST_in_t_scale)
 
     def get_ST(self):
         """
         Return the service time based on the service time distribution.
         """
-        
+
         return self.service_distribution.rvs()
