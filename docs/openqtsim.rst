@@ -25,14 +25,6 @@ openqtsim\.customer module
    :undoc-members:
    :show-inheritance:
 
-openqtsim\.lookup_tables module
-----------------------------------
-
-.. automodule:: openqtsim.lookup_tables
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 openqtsim\.queue module
 ---------------------------------
 
