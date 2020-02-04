@@ -8,9 +8,12 @@ All answers are compared to the analytical solutions.
 
 
 def test_lookup_table():
-    factor = openqtsim.lookup_tables.occupancy_to_waitingfactor(
-        utilisation=.3,
-        nr_of_servers_to_chk=1,
-        poly_order=6, kendall='E2/E2/n')
+    queue = openqtsim.Queue()
 
-    np.testing.assert_approx_equal(factor, 0.1310, significant=1)
+    utilisation = 0.9
+    nr_of_servers = 1
+
+    factor = queue.occupancy_to_waitingfactor(utilisation, nr_of_servers)
+    answer = 8.998295524474928
+
+    np.testing.assert_equal(factor, answer)
