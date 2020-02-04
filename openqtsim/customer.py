@@ -2,7 +2,7 @@
 
 class Customer:
     """
-    Generate customers based on the arrival process.
+    Customer class for use in the OpenQTSim package
     """
 
     def __init__(self, Env, Sim):
@@ -18,6 +18,9 @@ class Customer:
         self.customer_nr = Sim.customer_nr
 
     def move(self, IAT, AT):
+        """"
+        Method to move Customer through the system
+        """
         # IAT and AT have to be administrated when instantiating a customer
 
         # request access to server
@@ -43,7 +46,3 @@ class Customer:
             QL = self.Env.servers.data[-1][1]
 
             self.Sim.log_entry(customer_id, IAT, AT, ST, TSB, TSE, QL)
-
-
-
-

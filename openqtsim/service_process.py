@@ -1,5 +1,4 @@
 from scipy import stats
-import pandas as pd
 
 
 class ServiceProcess:
