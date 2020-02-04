@@ -1,45 +1,48 @@
-import random
 
-class customer:
+
+class Customer:
     """
-    Generate customers based on the arrival process.
+    Customer class for use in the OpenQTSim package
     """
 
-    def __init__(self, environment, simulation, customer_id=[]):
+    def __init__(self, Env, Sim):
         """
         Initialization
         """
 
         # self.arrival = arrival
-        self.environment = environment
-        self.simulation = simulation
+        self.Env = Env
+        self.Sim = Sim
 
-        simulation.customer_nr += 1
-        self.customer_nr = simulation.customer_nr
-        if len(customer_id) == 0:
-            self.customer_id = simulation.customer_nr
-        else:
-            self.customer_id = customer_id
+        Sim.customer_nr += 1
+        self.customer_nr = Sim.customer_nr
 
-    def move(self, IAT, AT, ST):
-        # draw IAT and ST from distributions
-        # inter_arrival_time = random.expovariate(self.arrival_rate)
+    def move(self, IAT, AT):
+        """"
+        Method to move Customer through the system
+        """
+        # IAT and AT have to be administrated when instantiating a customer
 
         # request access to server
-        with self.environment.servers.request() as my_turn:
+        with self.Env.servers.request() as my_turn:
             yield my_turn
 
             # determine TSB
-            TSB = self.environment.now - self.environment.epoch
+            TSB = self.Env.now - self.Env.epoch
 
-            yield self.environment.timeout(ST)
+            # get ST
+            ST, customer_id = self.Sim.queue.S.get_ST(self.customer_nr)
 
-            TSE = self.environment.now - self.environment.epoch
+            # more time ST forward
+            yield self.Env.timeout(ST)
+
+            # determine TSE
+            TSE = self.Env.now - self.Env.epoch
 
             # release server when done
-            yield self.environment.servers.release(my_turn)
+            yield self.Env.servers.release(my_turn)
 
-            QL = self.environment.servers.data[-1][1]
+            # register QL at TSE
+            QL = self.Env.servers.data[-1][1]
 
-            self.simulation.log_entry(self.customer_id, IAT, AT, ST, TSB, TSE, QL)
-
+            self.Sim.log_entry(customer_id, IAT, AT, ST, TSB, TSE, QL)

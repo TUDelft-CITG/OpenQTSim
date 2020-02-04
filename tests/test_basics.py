@@ -2,15 +2,27 @@ import numpy as np
 import openqtsim
 
 """
-Testing the M/M/c/inf/inf/FIFO queue, in this case c = 3.
-All answers are compared to the analytical solutions.
 """
 
 
-def test_lookup_table():
-    factor = openqtsim.lookup_tables.occupancy_to_waitingfactor(
-        utilisation=.3,
-        nr_of_servers_to_chk=1,
-        poly_order=6, kendall='E2/E2/n')
+def test_lookup_table_1():
+    queue = openqtsim.Queue()
 
-    np.testing.assert_approx_equal(factor, 0.1310, significant=1)
+    utilisation = 0.9
+    nr_of_servers = 1
+
+    factor = queue.occupancy_to_waitingfactor(utilisation, nr_of_servers)
+    answer = 8.998295524474928
+
+    np.testing.assert_almost_equal(factor, answer)
+
+def test_lookup_table_2():
+    queue = openqtsim.Queue()
+
+    factor = 0.0870
+    nr_of_servers = 4
+
+    factor = queue.waitingfactor_to_occupancy(factor, nr_of_servers)
+    answer = 0.493062176851717
+
+    np.testing.assert_almost_equal(factor, answer)

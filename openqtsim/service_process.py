@@ -1,26 +1,38 @@
 from scipy import stats
 
 
-class service_process:
+class ServiceProcess:
     """
     Class to represent the arrival process:
     - symbol is the symbol of the process (M, E_k, etc.)
-    - scipy.stats probility distribution of service times
+    - scipy.stats for probability distribution of service times or a deterministic list
     """
 
-    def __init__(self, symbol, service_distribution):
+    def __init__(self, symbol='M', srv_rate=9, t_scale=1):
         """
-        Initialization
+        srv_rate is in services per hour (corresponding to t_scale = 1)
+        t_scale 1: hours, 60: minutes, 3600: seconds, etc
+        select t_scale = 3600 if you want the simulation to be in seconds
         """
 
         self.symbol = symbol
-        self.service_distribution = service_distribution
-        self.service_rate = 1. / self.service_distribution.mean()
-        self.mean_service_time = self.service_distribution.mean()
+        self.t_scale = t_scale
 
-    def get_ST(self):
+        if self.symbol == "M":
+            aver_ST_in_t_scale = (1 * self.t_scale)/srv_rate
+            self.service_distribution = stats.expon(scale=aver_ST_in_t_scale)
+
+        elif self.symbol == "D":
+            self.service_distribution = srv_rate
+
+    def get_ST(self, customer_nr=[]):
         """
-        Return the service time based on the service time distribution.
+        Return the service time based on the service time distribution or deterministic list
         """
-        
-        return self.service_distribution.rvs()
+
+        if self.symbol == "M":
+            return self.service_distribution.rvs(), customer_nr
+
+        elif self.symbol == "D":
+            return self.service_distribution.loc[customer_nr, ['ST']].item(), \
+                   self.service_distribution.loc[customer_nr, ['name']].item()
