@@ -2,8 +2,6 @@ import numpy as np
 import openqtsim
 
 """
-Testing the M/M/c/inf/inf/FIFO queue, in this case c = 3.
-All answers are compared to the analytical solutions.
 """
 
 
