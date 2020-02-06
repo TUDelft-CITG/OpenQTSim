@@ -21,6 +21,10 @@ class ArrivalProcess:
             aver_IAT = 1/arr_rate
             self.arrival_distribution = stats.expon(scale=aver_IAT)
 
+        elif self.symbol == "E2":
+            aver_IAT = 1 / arr_rate
+            self.arrival_distribution = stats.erlang(2, scale=aver_IAT)
+
         elif self.symbol == "D":
             self.arrival_distribution = arr_rate
 
@@ -29,7 +33,7 @@ class ArrivalProcess:
         Return the inter arrival time based on the inter arrival time distribution or deterministic list
         """
 
-        if self.symbol == "M":
+        if self.symbol == "M" or self.symbol == "E2":
             return self.arrival_distribution.rvs()
 
         elif self.symbol == "D":

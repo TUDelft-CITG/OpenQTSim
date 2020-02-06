@@ -21,6 +21,10 @@ class ServiceProcess:
             aver_ST = 1/srv_rate
             self.service_distribution = stats.expon(scale=aver_ST)
 
+        elif self.symbol == "E2":
+            aver_ST = 1/srv_rate
+            self.service_distribution = stats.erlang(2, scale=aver_ST)
+
         elif self.symbol == "D":
             self.service_distribution = srv_rate
 
@@ -29,7 +33,7 @@ class ServiceProcess:
         Return the service time based on the service time distribution or deterministic list
         """
 
-        if self.symbol == "M":
+        if self.symbol == "M" or self.symbol == "E2":
             return self.service_distribution.rvs(), customer_nr
 
         elif self.symbol == "D":
