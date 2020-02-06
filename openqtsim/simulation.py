@@ -131,7 +131,7 @@ class Simulation:
     def get_stats(self):
         # https://www.youtube.com/watch?v=nDXD8oVelo4
         # https: // www.youtube.com / watch?v = QppldN - t4pQ
-        # https: // www.supositorio.com / rcalc / rcalclite.htm
+        # https://www.supositorio.com/rcalc/rcalclite.htm
         df = self.return_log()
 
         # this should be the right one
