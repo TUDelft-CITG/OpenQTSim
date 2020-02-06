@@ -36,8 +36,6 @@ class Queue:
         according to the distribution of the arrival process to populate the queue
         """
         # Prepare some variables before the while loop
-        IAT_LT_ac = np.inf
-        ST_LT_ac = np.inf
         if Sim.queue.A.symbol == 'D':
             Sim.IAT_tol = 0
             Sim.max_arr = np.min([Sim.max_arr, len(Sim.queue.A.arrival_distribution['IAT'])-1])
@@ -46,7 +44,7 @@ class Queue:
             Sim.max_arr = np.min([Sim.max_arr, len(Sim.queue.S.service_distribution['ST'])-1])
 
         # Simulation stops either when max arrivals (max_arr) is reached or the tolerance limits are achieved
-        while Sim.customer_nr < Sim.max_arr and (IAT_LT_ac > Sim.IAT_tol or ST_LT_ac > Sim.ST_tol):
+        while Sim.customer_nr < Sim.max_arr:
 
             # Draw IAT from distribution, move time forward and register arrival time (AT)
             IAT = Sim.queue.A.get_IAT(Sim.customer_nr)  # + 1 for the next customer
@@ -61,23 +59,18 @@ class Queue:
             # Make the customer go through the system
             Env.process(customer_new.move(IAT, AT))
 
-            # Calculate for IAT how accurate the simulation mean matches with the distribution mean
-            if len(Sim.log["IAT"]) >= 1 and not Sim.queue.A.symbol == 'D':
-                IAT_LT_ac = np.abs((np.mean(Sim.log["IAT"]) / Sim.t_scale) -
-                                   Sim.queue.A.arrival_distribution.mean()/Sim.t_scale)
-
-            # Calculate for ST how accurate the simulation mean matches with the distribution mean
-            if len(Sim.log["ST"]) >= 1 and not Sim.queue.S.symbol == 'D':
-                ST_LT_ac = np.abs((np.mean(Sim.log["ST"]) / Sim.t_scale) -
-                                  Sim.queue.S.service_distribution.mean()/Sim.t_scale)
+            # # Calculate for IAT how accurate the simulation mean matches with the distribution mean
+            # if len(Sim.log["IAT"]) >= 1 and not Sim.queue.A.symbol == 'D':
+            #     IAT_LT_ac = np.abs((np.mean(Sim.log["IAT"]) / Sim.t_scale) -
+            #                        Sim.queue.A.arrival_distribution.mean()/Sim.t_scale)
+            #
+            # # Calculate for ST how accurate the simulation mean matches with the distribution mean
+            # if len(Sim.log["ST"]) >= 1 and not Sim.queue.S.symbol == 'D':
+            #     ST_LT_ac = np.abs((np.mean(Sim.log["ST"]) / Sim.t_scale) -
+            #                       Sim.queue.S.service_distribution.mean()/Sim.t_scale)
 
         # Print brief simulation report
         print('Nr of customers: {}'.format(Sim.customer_nr))
-        if not Sim.queue.A.symbol == 'D':
-            print('Accuracy IAT: {}'.format(IAT_LT_ac))
-            print('Tolerance: {}'.format(Sim.IAT_tol))
-            print('Accuracy ST: {}'.format(ST_LT_ac))
-            print('Tolerance: {}'.format(Sim.ST_tol))
         print('')
 
     @property
