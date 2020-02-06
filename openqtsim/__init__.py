@@ -10,3 +10,4 @@ from .service_process import ServiceProcess
 from .queue import Queue
 from .customer import Customer
 from .simulation import Simulation
+from .mm1 import MM1
