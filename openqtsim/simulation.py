@@ -132,38 +132,72 @@ class Simulation:
         # https://www.youtube.com/watch?v=nDXD8oVelo4
         # https: // www.youtube.com / watch?v = QppldN - t4pQ
         # https: // www.supositorio.com / rcalc / rcalclite.htm
-        print('Average IAT: {:.4f} [hours]'.format((np.sum(self.log["IAT"])/self.t_scale)/(len(self.log["c_id"]))))
-        print('Average ST: {:.4f} [hours]'.format((np.sum(self.log["ST"])/self.t_scale)/(len(self.log["c_id"]))))
-        print('Rho: System utilisation: {:.4f}'.format((((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]))))
-        print('')
-        print('Total number of customers: {:.2f}'.format((len(self.log["c_id"]))))
-        print('')
-        print('W_s: Average time spent in the system: {:.2f} [hours]'.format((np.mean(self.log["TCSS"])/self.t_scale)))
-        print('W_q: Average time spent in the queue: {:.2f} [hours]'.format((np.mean(self.log["TCWQ"])/self.t_scale)))
+        df = self.return_log()
 
-        av_arr = self.t_scale/(np.sum(self.log["IAT"]) / (len(self.log["c_id"]) - 1))
-        av_ser = self.t_scale/(np.sum(self.log["ST"]) / (len(self.log["c_id"]) - 1))
-        print('Average nr arrivals: {:.2f} [# per hour]'.format(av_arr))
-        print('Average nr services: {:.2f} [# per hour]'.format(av_ser))
-        # print('Average nr people in the system: {:.2f}'.format(av_arr*(np.mean(self.log["TCSS"])/3600)))
+        # this should be the right one
+        value = np.mean(df["TCWQ"]) / np.mean(df["ST"])
+        print('Waiting time over service time: {:.4f}'.format(value))
+        print('')
 
+        value = np.mean(df[df["TCWQ"] != 0]["TCWQ"]) / np.mean(df["ST"])
+        print('Waiting time (for customers that waited) over service time: {:.4f}'.format(value))
         print('')
-        print('Total waiting time: {:.4f} [hours]'.format(np.sum(self.log["TCWQ"])/self.t_scale))
-        print('Average waiting time of all customers: {:.2f} [hours]'.format((np.sum(self.log["TCWQ"])/self.t_scale) / (len(self.log["c_id"]))))
-        print('Average waiting time of customers that waited: {:.2f} [hours]'.format((np.sum(self.log["TCWQ"])/self.t_scale) / np.sum(np.array(self.log["TCWQ"]) != 0)))
 
+        value = np.mean(df[df["TCWQ"] != 0]["TCWQ"]) / np.mean(df[df["TCWQ"] != 0]["ST"])
+        print('Waiting time (for customers that waited) over service time (for customers that waited): {:.4f}'.format(
+            value))
         print('')
-        print('P_0: Probability of idle server (nobody in the system): {:.4f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
-        print('Probability that somebody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) != 0) / (len(self.log["c_id"]))))
-        print('Probability that nobody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 0) / (len(self.log["c_id"]))))
-        print('P_2: Probability that 1 person is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 1) / (len(self.log["c_id"]))))
-        print('P_3: Probability that 2 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 2) / (len(self.log["c_id"]))))
-        print('P_4: Probability that 3 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 3) / (len(self.log["c_id"]))))
-        print('P_10: Probability that 9 persons are waiting (10 in system): {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 9) / (len(self.log["c_id"]))))
+
+        # OK
+        value = (df["TSE"].iloc[-1] - np.sum(df["ITS"])) / df["TSE"].iloc[-1]
+        print('Rho: system utilisation: {:.4f}'.format(value))
         print('')
-        # print('Total service time: {:.2f} [seconds]'.format(np.sum(self.log["ST"])))
-        # print('Average total time a customer spent in the system: {:.2f} [seconds]'.\
-        #       format(np.sum(self.log["TCSS"]) / (len(self.log["c_id"]))))
-        print('Average waiting time as a fraction of ST: {:.2f}'.format(np.mean(np.array(self.log["TCWQ"]))/np.mean(np.array(self.log["ST"]))))
+
+        # OK
+        value = np.sum(df["ITS"]) / df["TSE"].iloc[-1]
+        print('P_0: probability nobody in the system: {:.4f}'.format(value))
         print('')
+
+        value = np.mean(df[df["TCSS"] != 0]["TCSS"])
+        print('W_s: the long term average time spent in the system: {:.4f}'.format(value))
+        print('')
+
+        value = np.mean(df[df["TCWQ"] != 0]["TCWQ"])
+        print('W_q: the long term average time spent in the queue: {:.4f}'.format(value))
+        print('')
+
+        # print('Average IAT: {:.4f} [hours]'.format((np.sum(self.log["IAT"])/self.t_scale)/(len(self.log["c_id"]))))
+        # print('Average ST: {:.4f} [hours]'.format((np.sum(self.log["ST"])/self.t_scale)/(len(self.log["c_id"]))))
+        # print('Rho: System utilisation: {:.4f}'.format((((self.log["TSE"][-1] - np.sum(self.log["ITS"])) / self.log["TSE"][-1]))))
+        # print('')
+        # print('Total number of customers: {:.2f}'.format((len(self.log["c_id"]))))
+        # print('')
+        # print('W_s: Average time spent in the system: {:.2f} [hours]'.format((np.mean(self.log["TCSS"])/self.t_scale)))
+        # print('W_q: Average time spent in the queue: {:.2f} [hours]'.format((np.mean(self.log["TCWQ"])/self.t_scale)))
+        #
+        # av_arr = self.t_scale/(np.sum(self.log["IAT"]) / (len(self.log["c_id"]) - 1))
+        # av_ser = self.t_scale/(np.sum(self.log["ST"]) / (len(self.log["c_id"]) - 1))
+        # print('Average nr arrivals: {:.2f} [# per hour]'.format(av_arr))
+        # print('Average nr services: {:.2f} [# per hour]'.format(av_ser))
+        # # print('Average nr people in the system: {:.2f}'.format(av_arr*(np.mean(self.log["TCSS"])/3600)))
+        #
+        # print('')
+        # print('Total waiting time: {:.4f} [hours]'.format(np.sum(self.log["TCWQ"])/self.t_scale))
+        # print('Average waiting time of all customers: {:.2f} [hours]'.format((np.sum(self.log["TCWQ"])/self.t_scale) / (len(self.log["c_id"]))))
+        # print('Average waiting time of customers that waited: {:.2f} [hours]'.format((np.sum(self.log["TCWQ"])/self.t_scale) / np.sum(np.array(self.log["TCWQ"]) != 0)))
+        #
+        # print('')
+        # print('P_0: Probability of idle server (nobody in the system): {:.4f}'.format(np.sum(self.log["ITS"]) / self.log["TSE"][-1]))
+        # print('Probability that somebody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) != 0) / (len(self.log["c_id"]))))
+        # print('Probability that nobody is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 0) / (len(self.log["c_id"]))))
+        # print('P_2: Probability that 1 person is waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 1) / (len(self.log["c_id"]))))
+        # print('P_3: Probability that 2 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 2) / (len(self.log["c_id"]))))
+        # print('P_4: Probability that 3 persons are waiting: {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 3) / (len(self.log["c_id"]))))
+        # print('P_10: Probability that 9 persons are waiting (10 in system): {:.4f}'.format(np.sum(np.array(self.log["QL"]) == 9) / (len(self.log["c_id"]))))
+        # print('')
+        # # print('Total service time: {:.2f} [seconds]'.format(np.sum(self.log["ST"])))
+        # # print('Average total time a customer spent in the system: {:.2f} [seconds]'.\
+        # #       format(np.sum(self.log["TCSS"]) / (len(self.log["c_id"]))))
+        # print('Average waiting time as a fraction of ST: {:.2f}'.format(np.mean(np.array(self.log["TCWQ"]))/np.mean(np.array(self.log["ST"]))))
+        # print('')
 
