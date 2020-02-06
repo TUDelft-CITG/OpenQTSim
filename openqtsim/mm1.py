@@ -4,14 +4,21 @@ import pandas as pd
 
 
 class MM1:
+    """
+    A simple simulation method for MM1 queues
+    - Lists of IAT's and ST's are drawn from exponential distributions
+    - Values for AT, TSB, TSE, TCSS, TCWG and ITS are calculated per arrival
+    """
     def __init__(self, lam, mu, nr_arr, seed=None):
         """
-        Initialization the basic time unit is hours. Timescaling multiplies
+        Initialization the basic time unit is hours.
         """
-        self.lam = lam
-        self.mu = mu
-        self.nr_arr = nr_arr
-        self.seed = seed
+        # todo: consider to remove seed
+        self.lam = lam  # arrivals per hour
+        self.mu = mu  # departures per hour
+        self.nr_arr = nr_arr  # nr of customers
+
+        np.random.seed(seed)
 
     def get_IAT_and_ST(self):  # generate list of inter arrival times
 
@@ -19,7 +26,6 @@ class MM1:
         rv_st = stats.expon(scale=1 / self.mu)
 
         # generate list of inter arrival times
-        np.random.seed(self.seed)
         IAT = rv_iat.rvs(self.nr_arr)
 
         # generate list of service times
