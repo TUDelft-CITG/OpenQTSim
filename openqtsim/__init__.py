@@ -2,7 +2,7 @@
 
 __author__ = "Mark van Koningsveld and Joris den Uijl"
 __email__ = "m.vankoningsveld@tudelft.nl"
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from .arrival_process import ArrivalProcess
 from .service_process import ServiceProcess
