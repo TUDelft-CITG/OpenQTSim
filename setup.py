@@ -58,6 +58,6 @@ setup(
     test_suite = "tests",
     tests_require = tests_require,
     url = "https://github.com/TUDelft-CITG/OpenQTSim",
-    version = "v0.2.0",
+    version = "v0.3.0",
     zip_safe = False,
 )
