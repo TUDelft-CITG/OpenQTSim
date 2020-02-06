@@ -8,7 +8,7 @@ class ArrivalProcess:
     - scipy.stats for probability distribution of inter arrival times or a deterministic list
     """
 
-    def __init__(self, symbol='M', arr_rate=8, t_scale=1):
+    def __init__(self, symbol='M', arr_rate=8):
         """
         arr_rate is in arrivals per hour (corresponding to t_scale = 1)
         t_scale 1: hours, 60: minutes, 3600: seconds, etc
@@ -16,11 +16,10 @@ class ArrivalProcess:
         """
 
         self.symbol = symbol
-        self.t_scale = t_scale
 
         if self.symbol == "M":
-            aver_IAT_in_t_scale = (1 * self.t_scale)/arr_rate
-            self.arrival_distribution = stats.expon(scale=aver_IAT_in_t_scale)
+            aver_IAT = 1/arr_rate
+            self.arrival_distribution = stats.expon(scale=aver_IAT)
 
         elif self.symbol == "D":
             self.arrival_distribution = arr_rate

@@ -26,21 +26,20 @@ class Simulation:
     - seed is a random seed to have retraceable simulations
     """
 
-    def __init__(self, queue, max_arr=100, IAT_tol=0.0001, ST_tol=0.0001, priority=False, seed=None, t_scale=1):
+    def __init__(self, queue, max_arr=100, priority=False, seed=None):
         """
-        Initialization the basic time unit is hours.
+        Initialization (the basic time unit is hours)
         """
+        self.queue = queue
+        self.max_arr = max_arr
+
+        # set simulation time and epoch
         self.sim_start = datetime.datetime.now()
         self.env = simpy.Environment(initial_time=time.mktime(self.sim_start.timetuple()))
         self.env.epoch = time.mktime(self.sim_start.timetuple())
-        self.t_scale = t_scale
-        self.queue = queue
 
+        # initialise counters and logs
         self.customer_nr = 0
-        self.max_arr = max_arr
-        self.IAT_tol = IAT_tol
-        self.ST_tol = ST_tol
-
         self.log = {
             "c_id": [],  # c_id = customer id
             "IAT": [],  # IAT = inter arrival time
@@ -53,6 +52,7 @@ class Simulation:
             "ITS": [],  # ITS = idle time of the server
             "QL": []}  # QL = customers in the queue
 
+        # activate random seed
         np.random.seed(seed)
 
         # set nr of servers
@@ -61,12 +61,11 @@ class Simulation:
         else:
             self.env.servers = MonitoredResource(simpy.PriorityResource(self.env, capacity=self.queue.c))
 
+        # initiate queue populating process
         self.env.process(self.queue.populate(self.env, self))
 
-    def run(self, max_arr=1000, IAT_tol=0.001, ST_tol=0.001):
+    def run(self, max_arr=1000):
         self.max_arr = max_arr
-        self.IAT_tol = IAT_tol
-        self.ST_tol = ST_tol
 
         self.env.run()
 
@@ -101,9 +100,9 @@ class Simulation:
 
     def return_log(self, nr_of_records_to_display=0, to_csv=False):
         """
-        Return the log in the form of a pandas data frame. The input 'nr_of_records_to_display' determines
-        how many records are displayed starting from 1. If set to 0 all records are displayed.
-
+        Return the log in the form of a pandas data frame.
+        The input 'nr_of_records_to_display' determines how many records are displayed starting from 1. If set to 0 all
+        records are displayed.
         If to_csv is True, a .csv file will be saved with the name "simulation_results.csv"
         """
 
@@ -112,7 +111,7 @@ class Simulation:
         else:
             dataframe = pd.DataFrame.from_dict(self.log).head(nr_of_records_to_display)
 
-        if to_csv == True:
+        if to_csv:
             dataframe.to_csv("simulation_results.csv")
 
         return dataframe

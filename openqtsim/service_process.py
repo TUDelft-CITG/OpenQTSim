@@ -8,7 +8,7 @@ class ServiceProcess:
     - scipy.stats for probability distribution of service times or a deterministic list
     """
 
-    def __init__(self, symbol='M', srv_rate=9, t_scale=1):
+    def __init__(self, symbol='M', srv_rate=9):
         """
         srv_rate is in services per hour (corresponding to t_scale = 1)
         t_scale 1: hours, 60: minutes, 3600: seconds, etc
@@ -16,11 +16,10 @@ class ServiceProcess:
         """
 
         self.symbol = symbol
-        self.t_scale = t_scale
 
         if self.symbol == "M":
-            aver_ST_in_t_scale = (1 * self.t_scale)/srv_rate
-            self.service_distribution = stats.expon(scale=aver_ST_in_t_scale)
+            aver_ST = 1/srv_rate
+            self.service_distribution = stats.expon(scale=aver_ST)
 
         elif self.symbol == "D":
             self.service_distribution = srv_rate
