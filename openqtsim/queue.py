@@ -40,21 +40,17 @@ class Queue:
         while Sim.customer_nr < Sim.max_arr:
 
             # Draw IAT from distribution, move time forward and register arrival time (AT)
-            IAT = Sim.queue.A.get_IAT(Sim.customer_nr)  # + 1 for the next customer
+            IAT = Sim.queue.A.get_IAT(Sim.customer_nr)
 
             yield Env.timeout(IAT)
 
             AT = Env.now - Env.epoch
 
             # Create a customer
-            customer_new = Customer(Env, Sim)
+            customer_new = Customer(Env, Sim)  # init: +1 for the next customer
 
             # Make the customer go through the system
             Env.process(customer_new.move(IAT, AT))
-
-        # Print brief simulation report
-        print('Nr of customers: {}'.format(Sim.customer_nr))
-        print('')
 
     @property
     def kendall_notation(self):

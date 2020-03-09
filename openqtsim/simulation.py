@@ -3,20 +3,8 @@ import pandas as pd
 import numpy as np
 import datetime
 import time
-
-
-class MonitoredResource(simpy.Resource):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.data = []
-
-    def request(self, *args, **kwargs):
-        self.data.append((self._env.now, len(self.queue)))
-        return super().request(*args, **kwargs)
-
-    def release(self, *args, **kwargs):
-        self.data.append((self._env.now, len(self.queue)))
-        return super().release(*args, **kwargs)
+from scipy import stats
+from collections import namedtuple
 
 
 class Simulation:
@@ -50,16 +38,38 @@ class Simulation:
             "TCSS": [],  # TCSS = time customer spends in the system
             "TCWQ": [],  # TCWQ = time customer waits in the queue
             "ITS": [],  # ITS = idle time of the server
-            "QL": []}  # QL = customers in the queue
+            "s_id": []}  # s_id = server id
 
         # activate random seed
         np.random.seed(seed)
 
         # set nr of servers
         if not priority:
-            self.env.servers = MonitoredResource(self.env, capacity=self.queue.c)
+
+            # arrival distribution
+            aver_IAT = 1 / self.queue.A.arr_rate
+            if self.queue.A.symbol == "M":
+                self.queue.A.arrival_distribution = stats.expon(scale=aver_IAT)
+            elif self.queue.A.symbol == "E2":
+                self.queue.A.arrival_distribution = stats.erlang(2, scale=aver_IAT)
+
+            # service distribution
+            self.env.servers = simpy.FilterStore(self.env, capacity=self.queue.c)
+            self.env.servers.items = []
+            self.env.server_info = {}
+            Server = namedtuple('Server', 'service_distribution, last_active, id')
+            aver_ST = 1 / self.queue.S.srv_rate
+            if self.queue.S.symbol == "M":
+                for i in range(1, self.queue.c + 1):
+                    self.env.servers.items.append(Server(stats.expon(scale=aver_ST), self.env.now, i))
+                    self.env.server_info.update({i: {'last_active': self.env.now}})
+            elif self.queue.S.symbol == "E2":
+                for i in range(1, self.queue.c + 1):
+                    self.env.servers.items.append(Server(stats.erlang(2, scale=aver_ST), self.env.now, i))
+                    self.env.server_info.update({i: {'last_active': self.env.now}})
+
         else:
-            self.env.servers = MonitoredResource(simpy.PriorityResource(self.env, capacity=self.queue.c))
+            pass
 
         # initiate queue populating process
         self.env.process(self.queue.populate(self.env, self))
@@ -69,7 +79,7 @@ class Simulation:
 
         self.env.run()
 
-    def log_entry(self, customer_id, IAT, AT, ST, TSB, TSE, QL):
+    def log_entry(self, customer_id, IAT, AT, ST, TSB, TSE, ITS, s_id):
         """
         # the following items are logged per customer that enters the system:
         # c = customer id
@@ -92,11 +102,8 @@ class Simulation:
         self.log["TSE"].append(TSE)
         self.log["TCWQ"].append(TSB - AT)
         self.log["TCSS"].append(TSE - AT)
-        if len(self.log["c_id"]) == 1:
-            self.log["ITS"].append(IAT)  # the server will start idle until the first arrival
-        else:
-            self.log["ITS"].append(max([AT - self.log["TSE"][-2], 0]))  # todo: I don't think this works with multiple servers
-        self.log["QL"].append(QL)  # this is monitored by using the custom class MonitoredResource defined above
+        self.log["ITS"].append(ITS)
+        self.log["s_id"].append(s_id)
 
     def return_log(self, nr_of_records_to_display=0, to_csv=False):
         """
@@ -121,10 +128,11 @@ class Simulation:
         df = self.return_log()
 
         value = np.mean(df["TCWQ"]) / np.mean(df["ST"])
+        # value = np.mean(df[df["TCWQ"] != 0]["TCWQ"]) / np.mean(df["ST"])
         print('Waiting time over service time: {:.4f}'.format(value))
         print('')
 
-        value = (df["TSE"].iloc[-1] - np.sum(df["ITS"])) / df["TSE"].iloc[-1]
+        value = (df["TSE"].iloc[-1] - (np.sum(df["ITS"])/self.queue.c)) / df["TSE"].iloc[-1]
         print('Rho: system utilisation: {:.4f}'.format(value))
         print('')
 
