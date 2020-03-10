@@ -43,8 +43,12 @@ class Queue:
             IAT = Sim.queue.A.get_IAT(Sim.customer_nr)
 
             yield Env.timeout(IAT)
-
             AT = Env.now - Env.epoch
+            Sim.c_s += 1
+            Sim.t.append(AT)
+            Sim.t_c_s.append(Sim.c_s)
+            Sim.t_c_q.append(Sim.c_q)
+            # Sim.system_state = Sim.system_state.append({'t': AT, 'c_s': Sim.c_s, 'c_q': Sim.c_q}, ignore_index=True)
 
             # Create a customer
             customer_new = Customer(Env, Sim)  # init: +1 for the next customer

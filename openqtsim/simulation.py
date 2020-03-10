@@ -28,6 +28,12 @@ class Simulation:
 
         # initialise counters and logs
         self.customer_nr = 0
+        self.t = [0]
+        self.t_c_s = [0]
+        self.t_c_q = [0]
+        self.system_state = pd.DataFrame(columns=['t', 'c_s', 'c_q'])
+        self.c_s = 0  # people in the system
+        self.c_q = 0  # people in the queue
         self.log = {
             "c_id": [],  # c_id = customer id
             "IAT": [],  # IAT = inter arrival time
@@ -105,7 +111,7 @@ class Simulation:
         self.log["ITS"].append(ITS)
         self.log["s_id"].append(s_id)
 
-    def return_log(self, nr_of_records_to_display=0, to_csv=False):
+    def return_log(self):
         """
         Return the log in the form of a pandas data frame.
         The input 'nr_of_records_to_display' determines how many records are displayed starting from 1. If set to 0 all
@@ -113,19 +119,19 @@ class Simulation:
         If to_csv is True, a .csv file will be saved with the name "simulation_results.csv"
         """
 
-        if nr_of_records_to_display == 0:
-            dataframe = pd.DataFrame.from_dict(self.log)
-        else:
-            dataframe = pd.DataFrame.from_dict(self.log).head(nr_of_records_to_display)
+        df = pd.DataFrame.from_dict(self.log)
 
-        if to_csv:
-            dataframe.to_csv("simulation_results.csv")
+        df_sys = pd.DataFrame(columns=['t', 'c_s', 'c_q'])
+        df_sys['t'] = self.t
+        df_sys['c_s'] = self.t_c_s
+        df_sys['c_q'] = self.t_c_q
+        df_sys = df_sys.sort_values(by=['t'], ascending=[True])
 
-        return dataframe
+        return df, df_sys
 
     def get_stats(self):
 
-        df = self.return_log()
+        df, df_sys = self.return_log()
 
         value = np.mean(df["TCWQ"]) / np.mean(df["ST"])
         # value = np.mean(df[df["TCWQ"] != 0]["TCWQ"]) / np.mean(df["ST"])
@@ -133,17 +139,21 @@ class Simulation:
         print('')
 
         value = (df["TSE"].iloc[-1] - (np.sum(df["ITS"])/self.queue.c)) / df["TSE"].iloc[-1]
-        print('Rho: system utilisation: {:.4f}'.format(value))
-        print('')
+        print('Rho: server utilisation: {:.4f}'.format(value))
 
         value = np.sum(df["ITS"]) / df["TSE"].iloc[-1]
         print('P_0: probability nobody in the system: {:.4f}'.format(value))
+        print('')
 
+        value = np.mean(df_sys['c_s'])
+        print('L_s: average nr of customers in the system: {}'.format(value))
+        value = np.mean(df_sys['c_q'])
+        print('L_q: average nr of customers in the queue: {}'.format(value))
         value = np.mean(df["TCSS"])
         print('W_s: the long term average time spent in the system: {:.4f}'.format(value))
-
         value = np.mean(df["TCWQ"])
         print('W_q: the long term average time spent in the queue: {:.4f}'.format(value))
+        print('')
 
         value = df["AT"].iloc[-1]/(len(df["ST"])-1)
         print('IAT: average inter arrival time: {:.4f}'.format(value))
@@ -151,3 +161,4 @@ class Simulation:
         value = np.sum(df["ST"])/(len(df["ST"]))
         print('ST: average service time: {:.4f}'.format(value))
         print('')
+
