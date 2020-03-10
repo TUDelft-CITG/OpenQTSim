@@ -21,6 +21,7 @@ class Customer:
         """"
         Method to move Customer through the system
         """
+
         # request access to server
         self.Sim.c_s += 1
         self.Sim.c_q += 1
@@ -38,7 +39,7 @@ class Customer:
         if t_req != t_yield:  # only log when someone is actually waiting to be served
             self.Sim.log_system_state(t_req, c_s_req, c_q_req)
             self.Sim.log_system_state(t_yield, c_s_yield, c_q_yield)
-        else:
+        else:  # otherwise log the yield moment
             self.Sim.log_system_state(t_yield, c_s_yield, c_q_yield)
 
         # register if the server was idle
@@ -63,6 +64,7 @@ class Customer:
         if self.Sim.c_q == 0:
             self.Sim.log_system_state(TSE, self.Sim.c_s, self.Sim.c_q)
         # Todo: when a customer leaves the system while somebody is still in the queue, you get a double logging
+        #  (check how this works for more than 1 server)
 
         # update server_info when server was last active
         self.Env.server_info.update({server.id: {'last_active': self.Env.now}})

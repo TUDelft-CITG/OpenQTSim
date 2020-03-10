@@ -47,9 +47,6 @@ class Queue:
             # determine AT
             AT = Env.now - Env.epoch
 
-            # Sim.c_s += 1
-            # Sim.log_system_state(AT, Sim.c_s, Sim.c_q)
-
             # Create a customer
             customer_new = Customer(Env, Sim)  # init: +1 for the next customer
 
@@ -67,7 +64,9 @@ class Queue:
         )
 
     def occupancy_to_waitingfactor(self, utilisation=.3, nr_of_servers_to_chk=4, poly_order=6):
-        """Waiting time factor (E2/E2/n or M/E2/n) queueing theory using 6th order polynomial regression)"""
+        """
+        Waiting time factor (E2/E2/n or M/E2/n) queueing theory using 6th order polynomial regression)
+        """
 
         kendall = "{}/{}/{}".format(self.A.symbol, self.S.symbol, str(self.c))
 
@@ -142,7 +141,9 @@ class Queue:
         return waiting_factor
 
     def waitingfactor_to_occupancy(self, factor=.3, nr_of_servers_to_chk=4, poly_order=6):
-        """Waiting time factor (E2/E2/n or M/E2/n) queueing theory using 6th order polynomial regression)"""
+        """
+        Waiting time factor (E2/E2/n or M/E2/n) queueing theory using 6th order polynomial regression)
+        """
 
         kendall = "{}/{}/{}".format(self.A.symbol, self.S.symbol, str(self.c))
 

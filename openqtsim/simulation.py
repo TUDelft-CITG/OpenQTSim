@@ -18,6 +18,7 @@ class Simulation:
         """
         Initialization (the basic time unit is hours)
         """
+
         self.queue = queue
         self.max_arr = max_arr
 
@@ -27,16 +28,14 @@ class Simulation:
         self.env.epoch = time.mktime(self.sim_start.timetuple())
 
         # initialise counters and logs
-        self.customer_nr = 0
-        self.t = [0]
-        self.t_c_s = [0]
-        self.t_c_q = [0]
+        self.c_s = 0  # people in the system
+        self.c_q = 0  # people in the queue
         self.system_state = {
             "t": [0],
             "c_s": [0],
             "c_q": [0]}
-        self.c_s = 0  # people in the system
-        self.c_q = 0  # people in the queue
+
+        self.customer_nr = 0
         self.log = {
             "c_id": [],  # c_id = customer id
             "IAT": [],  # IAT = inter arrival time
@@ -79,11 +78,16 @@ class Simulation:
 
         else:
             pass
+            # Todo: add the option of having priority arrivals?
 
         # initiate queue populating process
         self.env.process(self.queue.populate(self.env, self))
 
     def run(self, max_arr=1000):
+        """
+        Run simulation
+        """
+
         self.max_arr = max_arr
 
         self.env.run()
@@ -129,20 +133,22 @@ class Simulation:
     def return_log(self):
         """
         Return the log in the form of a pandas data frame.
-        The input 'nr_of_records_to_display' determines how many records are displayed starting from 1. If set to 0 all
-        records are displayed.
-        If to_csv is True, a .csv file will be saved with the name "simulation_results.csv"
         """
 
+        # convert self.log to dataframe
         df = pd.DataFrame.from_dict(self.log)
         df = df.sort_values(by=['AT'], ascending=[True])
 
+        # convert self.system_state to dataframe
         df_sys = pd.DataFrame.from_dict(self.system_state)
         df_sys = df_sys.sort_values(by=['t'], ascending=[True])
 
         return df, df_sys
 
     def get_stats(self):
+        """
+        Post processing of logs to print basic simulation statistics
+        """
 
         df, df_sys = self.return_log()
 
@@ -177,6 +183,10 @@ class Simulation:
         print('')
 
     def plot_system_state(self, fontsize=20):
+        """
+        Plot number of customers in the system and in the queue as a function of time
+        """
+
         df, df_sys = self.return_log()
         fig, ax = plt.subplots(figsize=(14, 5))
         ax.plot(df_sys['t'].values, df_sys['c_s'].values, '-bo', markersize=.1, label='c_s')
