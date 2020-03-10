@@ -5,7 +5,7 @@ import datetime
 import time
 from scipy import stats
 from collections import namedtuple
-
+import matplotlib.pyplot as plt
 
 class Simulation:
     """
@@ -31,7 +31,10 @@ class Simulation:
         self.t = [0]
         self.t_c_s = [0]
         self.t_c_q = [0]
-        self.system_state = pd.DataFrame(columns=['t', 'c_s', 'c_q'])
+        self.system_state = {
+            "t": [0],
+            "c_s": [0],
+            "c_q": [0]}
         self.c_s = 0  # people in the system
         self.c_q = 0  # people in the queue
         self.log = {
@@ -97,7 +100,7 @@ class Simulation:
         # TCSS = time customer spends in the system
         # TCWQ = time customer waits in the queue
         # ITS = idle time of the server
-        # QL = queue length (at T = TSE)
+        # s_id = id of server assigned to customer
         """
 
         self.log["c_id"].append(customer_id)
@@ -111,6 +114,18 @@ class Simulation:
         self.log["ITS"].append(ITS)
         self.log["s_id"].append(s_id)
 
+    def log_system_state(self, t, c_s, c_q):
+        """
+        # the following items are logged for the state of the system:
+        # t = time (from start of simulation)
+        # c_s = number of customers in the system
+        # c_q = number of customers in the queue
+        """
+
+        self.system_state["t"].append(t)
+        self.system_state["c_s"].append(c_s)
+        self.system_state["c_q"].append(c_q)
+
     def return_log(self):
         """
         Return the log in the form of a pandas data frame.
@@ -120,11 +135,9 @@ class Simulation:
         """
 
         df = pd.DataFrame.from_dict(self.log)
+        df = df.sort_values(by=['AT'], ascending=[True])
 
-        df_sys = pd.DataFrame(columns=['t', 'c_s', 'c_q'])
-        df_sys['t'] = self.t
-        df_sys['c_s'] = self.t_c_s
-        df_sys['c_q'] = self.t_c_q
+        df_sys = pd.DataFrame.from_dict(self.system_state)
         df_sys = df_sys.sort_values(by=['t'], ascending=[True])
 
         return df, df_sys
@@ -148,6 +161,7 @@ class Simulation:
         value = np.mean(df_sys['c_s'])
         print('L_s: average nr of customers in the system: {}'.format(value))
         value = np.mean(df_sys['c_q'])
+
         print('L_q: average nr of customers in the queue: {}'.format(value))
         value = np.mean(df["TCSS"])
         print('W_s: the long term average time spent in the system: {:.4f}'.format(value))
@@ -161,4 +175,15 @@ class Simulation:
         value = np.sum(df["ST"])/(len(df["ST"]))
         print('ST: average service time: {:.4f}'.format(value))
         print('')
+
+    def plot_system_state(self, fontsize=20):
+        df, df_sys = self.return_log()
+        fig, ax = plt.subplots(figsize=(14, 5))
+        ax.plot(df_sys['t'].values, df_sys['c_s'].values, '-bo', markersize=.1, label='c_s')
+        ax.plot(df_sys['t'].values, df_sys['c_q'].values, '-ro', markersize=.1, label='c_q')
+
+        ax.set_xlabel('Time [hours]', fontsize=fontsize)
+        ax.set_ylabel('nr of customers', fontsize=fontsize)
+        ax.set_title('System state: {}'.format(self.queue.kendall_notation), fontsize=fontsize)
+        ax.legend(loc='upper right', fontsize=fontsize)
 

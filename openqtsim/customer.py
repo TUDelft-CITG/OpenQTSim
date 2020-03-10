@@ -22,31 +22,24 @@ class Customer:
         Method to move Customer through the system
         """
         # request access to server
-        t_req = self.Env.now - self.Env.epoch
-
+        self.Sim.c_s += 1
         self.Sim.c_q += 1
-        self.Sim.t.append(t_req)
-        self.Sim.t_c_s.append(self.Sim.c_s)
-        self.Sim.t_c_q.append(self.Sim.c_q)
+        t_req = AT
+        c_s_req = self.Sim.c_s
+        c_q_req = self.Sim.c_q
 
-        # self.Sim.system_state = self.Sim.system_state.append({'t': t_req, 'c_s': self.Sim.c_s, 'c_q': self.Sim.c_q},
-        #                                                      ignore_index=True)
         server = yield self.Env.servers.get()
-        t_yield = self.Env.now - self.Env.epoch
 
         self.Sim.c_q -= 1
-        self.Sim.t.append(t_yield)
-        self.Sim.t_c_s.append(self.Sim.c_s)
-        self.Sim.t_c_q.append(self.Sim.c_q)
+        t_yield = self.Env.now - self.Env.epoch
+        c_s_yield = self.Sim.c_s
+        c_q_yield = self.Sim.c_q
 
-        # self.Sim.system_state = self.Sim.system_state.append({'t': t_yield, 'c_s': self.Sim.c_s, 'c_q': self.Sim.c_q},
-        #                                                      ignore_index=True)
-
-        # if t_req != t_yield:
-        #     self.Sim.c_q += 1
-        #     self.Sim.system_state = self.Sim.system_state.append({'t': t_req, 'c_s': self.Sim.c_s, 'c_q': self.Sim.c_q}, ignore_index=True)
-        #     self.Sim.c_q -= 1
-        #     self.Sim.system_state = self.Sim.system_state.append({'t': t_yield, 'c_s': self.Sim.c_s, 'c_q': self.Sim.c_q}, ignore_index=True)
+        if t_req != t_yield:  # only log when someone is actually waiting to be served
+            self.Sim.log_system_state(t_req, c_s_req, c_q_req)
+            self.Sim.log_system_state(t_yield, c_s_yield, c_q_yield)
+        else:
+            self.Sim.log_system_state(t_yield, c_s_yield, c_q_yield)
 
         # register if the server was idle
         ITS = self.Env.now - self.Env.server_info[server.id]['last_active']
@@ -67,10 +60,9 @@ class Customer:
         TSE = self.Env.now - self.Env.epoch
 
         self.Sim.c_s -= 1
-        self.Sim.t.append(TSE)
-        self.Sim.t_c_s.append(self.Sim.c_s)
-        self.Sim.t_c_q.append(self.Sim.c_q)
-        # self.Sim.system_state = self.Sim.system_state.append({'t': self.Env.now, 'c_s': self.Sim.c_s, 'c_q': self.Sim.c_q}, ignore_index=True)
+        if self.Sim.c_q == 0:
+            self.Sim.log_system_state(TSE, self.Sim.c_s, self.Sim.c_q)
+        # Todo: when a customer leaves the system while somebody is still in the queue, you get a double logging
 
         # update server_info when server was last active
         self.Env.server_info.update({server.id: {'last_active': self.Env.now}})
@@ -78,4 +70,5 @@ class Customer:
         # release server when done
         yield self.Env.servers.put(server)
 
+        # add customer info to log
         self.Sim.log_entry(self.customer_nr, IAT, AT, ST, TSB, TSE, ITS, s_id)
