@@ -35,6 +35,9 @@ tests_require = [
     "pytest-cov",
 ]
 
+with open("README.md", "r") as des:
+    long_description = des.read()
+
 setup(
     author = "Mark van Koningsveld and Joris den Uijl",
     author_email = "m.vankoningsveld@tudelft.nl",
@@ -50,10 +53,11 @@ setup(
     ],
     description = "OpenQTSim facilitates discrete event simulation of queues with a Kendall notation.",
     install_requires = requires,
-    long_description = "",  # README + '\n\n' + CHANGES,
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     include_package_data = True,
     keywords = "Queueing Theory",
-    name = "OpenQTSim",
+    name = "openqtsim",
     packages = find_packages(include=["openqtsim"]),
     setup_requires = setup_requirements,
     test_suite = "tests",
