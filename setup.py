@@ -18,6 +18,7 @@ except VersionConflict:
     sys.exit(1)
 
 requires = [
+    "matplotlib",
     "pandas",
     "numpy",
     "simpy",
