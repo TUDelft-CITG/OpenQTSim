@@ -2,6 +2,18 @@
 History
 =======
 
+v0.5.0 (2020-03-11)
+------------------
+
+* Package made public (published via zenodo.org)
+* Package still under development
+
+
+v0.4.0 (2020-03-11)
+------------------
+
+* Package reorganised (code cleanup, multi thread engine added)
+
 v0.3.0 (2020-02-06)
 ------------------
 
