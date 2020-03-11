@@ -12,3 +12,4 @@ from .customer import Customer
 from .simulation import Simulation
 from .mm1 import MM1
 from .tables import get_waiting_time_service_time_table
+from .mt_engine import worker, Task
