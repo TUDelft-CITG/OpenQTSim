@@ -7,6 +7,7 @@ from scipy import stats
 from collections import namedtuple
 import matplotlib.pyplot as plt
 
+
 class Simulation:
     """
     A discrete event simulation that simulates the queue.
@@ -51,30 +52,57 @@ class Simulation:
         # activate random seed
         np.random.seed(seed)
 
-        # set nr of servers
+        # define arrival and service processes
         if not priority:
 
-            # arrival distribution
-            aver_IAT = 1 / self.queue.A.arr_rate
+            # --- arrival distribution ---
             if self.queue.A.symbol == "M":
+                # define the average inter arrival time and add distribution with appropriate scaling
+                aver_IAT = 1 / self.queue.A.arr_rate
                 self.queue.A.arrival_distribution = stats.expon(scale=aver_IAT)
+
             elif self.queue.A.symbol == "E2":
+                # define the average inter arrival time and add distribution with appropriate scaling
+                aver_IAT = 1 / self.queue.A.arr_rate
                 self.queue.A.arrival_distribution = stats.erlang(2, scale=aver_IAT)
 
-            # service distribution
+            elif self.queue.A.symbol == "D":
+                # the deterministic type expects arr_rate to contain a dataframe with columns ["name","IAT","AT"]
+                self.queue.A.arrival_distribution = self.queue.A.arr_rate
+
+            # --- service distribution ---
             self.env.servers = simpy.FilterStore(self.env, capacity=self.queue.c)
-            self.env.servers.items = []
-            self.env.server_info = {}
+            self.env.servers.items = []  # to be filled in the next steps depending on S.symbol
+            self.env.server_info = {}  # to be filled in the next steps depending on S.symbol
             Server = namedtuple('Server', 'service_distribution, last_active, id')
-            aver_ST = 1 / self.queue.S.srv_rate
+
             if self.queue.S.symbol == "M":
+                # define the average service time and add distribution with appropriate scaling for each server
+                aver_ST = 1 / self.queue.S.srv_rate
                 for i in range(1, self.queue.c + 1):
                     self.env.servers.items.append(Server(stats.expon(scale=aver_ST), self.env.now, i))
                     self.env.server_info.update({i: {'last_active': self.env.now}})
+
             elif self.queue.S.symbol == "E2":
+                # define the average service time and add distribution with appropriate scaling for each server
+                aver_ST = 1 / self.queue.S.srv_rate
                 for i in range(1, self.queue.c + 1):
                     self.env.servers.items.append(Server(stats.erlang(2, scale=aver_ST), self.env.now, i))
                     self.env.server_info.update({i: {'last_active': self.env.now}})
+
+            elif self.queue.A.symbol == "D":
+                if self.queue.c == 1:
+                    # for 1 server the deterministic type expects srv_rate to contain a dataframe
+                    # with columns: ["name","ST"]
+                    self.env.servers.items.append(Server(self.queue.S.srv_rate, self.env.now, 1))
+                    self.env.server_info.update({1: {'last_active': self.env.now}})
+                else:
+                    # for n servers the deterministic type expects srv_rate to contain a dataframe
+                    # with columns: ["name","ST","s_id"]
+                    for i in range(1, self.queue.c + 1):
+                        self.env.servers.items.append(Server(self.queue.S.srv_rate[self.queue.S.srv_rate["s_id"] == i],
+                                                             self.env.now, i))
+                        self.env.server_info.update({i: {'last_active': self.env.now}})
 
         else:
             pass
@@ -92,7 +120,7 @@ class Simulation:
 
         self.env.run()
 
-    def log_entry(self, customer_id, IAT, AT, ST, TSB, TSE, ITS, s_id):
+    def log_customer_state(self, customer_id, IAT, AT, ST, TSB, TSE, ITS, s_id):
         """
         # the following items are logged per customer that enters the system:
         # c = customer id
@@ -136,31 +164,32 @@ class Simulation:
         """
 
         # convert self.log to dataframe
-        df = pd.DataFrame.from_dict(self.log)
-        df = df.sort_values(by=['AT'], ascending=[True])
+        df_cust = pd.DataFrame.from_dict(self.log)
+        df_cust = df_cust.sort_values(by=['AT'], ascending=[True])
 
         # convert self.system_state to dataframe
         df_sys = pd.DataFrame.from_dict(self.system_state)
         df_sys = df_sys.sort_values(by=['t'], ascending=[True])
 
-        return df, df_sys
+        return df_cust, df_sys
 
     def get_stats(self):
         """
         Post processing of logs to print basic simulation statistics
         """
 
-        df, df_sys = self.return_log()
+        df_cust, df_sys = self.return_log()
 
-        value = np.mean(df["TCWQ"]) / np.mean(df["ST"])
-        # value = np.mean(df[df["TCWQ"] != 0]["TCWQ"]) / np.mean(df["ST"])
+        value = np.mean(df_cust["TCWQ"]) / np.mean(df_cust["ST"])
         print('Waiting time over service time: {:.4f}'.format(value))
         print('')
 
-        value = (df["TSE"].iloc[-1] - (np.sum(df["ITS"])/self.queue.c)) / df["TSE"].iloc[-1]
-        print('Rho: server utilisation: {:.4f}'.format(value))
+        value = (df_cust["TSE"].iloc[-1] - np.sum(df_cust["ITS"])) / df_cust["TSE"].iloc[-1]
+        print('Rho_system: system utilisation: {:.4f}'.format(value))
+        value = (df_cust["TSE"].iloc[-1] - (np.sum(df_cust["ITS"])/self.queue.c)) / df_cust["TSE"].iloc[-1]
+        print('Rho_server: server utilisation: {:.4f}'.format(value))
 
-        value = np.sum(df["ITS"]) / df["TSE"].iloc[-1]
+        value = np.sum(df_cust["ITS"]) / df_cust["TSE"].iloc[-1]
         print('P_0: probability nobody in the system: {:.4f}'.format(value))
         print('')
 
@@ -169,16 +198,16 @@ class Simulation:
         value = np.mean(df_sys['c_q'])
 
         print('L_q: average nr of customers in the queue: {}'.format(value))
-        value = np.mean(df["TCSS"])
+        value = np.mean(df_cust["TCSS"])
         print('W_s: the long term average time spent in the system: {:.4f}'.format(value))
-        value = np.mean(df["TCWQ"])
+        value = np.mean(df_cust["TCWQ"])
         print('W_q: the long term average time spent in the queue: {:.4f}'.format(value))
         print('')
 
-        value = df["AT"].iloc[-1]/(len(df["ST"])-1)
+        value = df_cust["AT"].iloc[-1]/(len(df_cust["ST"])-1)
         print('IAT: average inter arrival time: {:.4f}'.format(value))
 
-        value = np.sum(df["ST"])/(len(df["ST"]))
+        value = np.sum(df_cust["ST"])/(len(df_cust["ST"]))
         print('ST: average service time: {:.4f}'.format(value))
         print('')
 
@@ -187,7 +216,8 @@ class Simulation:
         Plot number of customers in the system and in the queue as a function of time
         """
 
-        df, df_sys = self.return_log()
+        df_cust, df_sys = self.return_log()
+        
         fig, ax = plt.subplots(figsize=(14, 5))
         ax.plot(df_sys['t'].values, df_sys['c_s'].values, '-bo', markersize=.1, label='c_s')
         ax.plot(df_sys['t'].values, df_sys['c_q'].values, '-ro', markersize=.1, label='c_q')

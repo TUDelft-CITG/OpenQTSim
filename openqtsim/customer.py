@@ -52,7 +52,9 @@ class Customer:
         TSB = self.Env.now - self.Env.epoch
 
         # get ST
-        ST = server.service_distribution.rvs()
+        # ST = server.service_distribution.rvs()
+        ST = self.Sim.queue.S.get_ST(server, customer_nr=self.customer_nr)
+        # server.service_distribution.rvs()
 
         # move time ST forward
         yield self.Env.timeout(ST)
@@ -73,4 +75,4 @@ class Customer:
         yield self.Env.servers.put(server)
 
         # add customer info to log
-        self.Sim.log_entry(self.customer_nr, IAT, AT, ST, TSB, TSE, ITS, s_id)
+        self.Sim.log_customer_state(self.customer_nr, IAT, AT, ST, TSB, TSE, ITS, s_id)

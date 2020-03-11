@@ -8,7 +8,7 @@ from openqtsim.service_process import ServiceProcess
 
 class Queue:
     """
-    Queueing node based on Kendall's notation, in which:
+    Queueing class based on Kendall's notation, in which:
     - A is the arrival process
     - S is the service time distribution
     - c is the number of servers

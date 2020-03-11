@@ -2,7 +2,7 @@
 
 class ArrivalProcess:
     """
-    Class to represent the arrival process:
+    Arrival process class for use in the OpenQTSim package
     """
 
     def __init__(self, symbol='M', arr_rate=8):
