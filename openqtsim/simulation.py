@@ -217,7 +217,7 @@ class Simulation:
         """
 
         df_cust, df_sys = self.return_log()
-        
+
         fig, ax = plt.subplots(figsize=(14, 5))
         ax.plot(df_sys['t'].values, df_sys['c_s'].values, '-bo', markersize=.1, label='c_s')
         ax.plot(df_sys['t'].values, df_sys['c_q'].values, '-ro', markersize=.1, label='c_q')
