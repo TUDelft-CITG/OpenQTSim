@@ -19,7 +19,7 @@ class ServiceProcess:
         Return the inter arrival time based on the inter arrival time distribution or deterministic list
         """
 
-        if self.symbol == "M" or self.symbol == "E2":
+        if self.symbol == "M" or self.symbol[0] == "E":
             return server.service_distribution.rvs()
 
         elif self.symbol == "D":

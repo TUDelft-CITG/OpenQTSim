@@ -61,10 +61,12 @@ class Simulation:
                 aver_IAT = 1 / self.queue.A.arr_rate
                 self.queue.A.arrival_distribution = stats.expon(scale=aver_IAT)
 
-            elif self.queue.A.symbol == "E2":
+            elif self.queue.A.symbol[0] == "E":
                 # define the average inter arrival time and add distribution with appropriate scaling
                 aver_IAT = 1 / self.queue.A.arr_rate
-                self.queue.A.arrival_distribution = stats.erlang(2, scale=aver_IAT)
+                k = int(self.queue.S.symbol[1:])
+                loc = 0
+                self.queue.A.arrival_distribution = stats.erlang(k, loc=loc, scale=aver_IAT / k)
 
             elif self.queue.A.symbol == "D":
                 # the deterministic type expects arr_rate to contain a dataframe with columns ["name","IAT","AT"]
@@ -83,14 +85,16 @@ class Simulation:
                     self.env.servers.items.append(Server(stats.expon(scale=aver_ST), self.env.now, i))
                     self.env.server_info.update({i: {'last_active': self.env.now}})
 
-            elif self.queue.S.symbol == "E2":
+            elif self.queue.S.symbol[0] == "E":
                 # define the average service time and add distribution with appropriate scaling for each server
                 aver_ST = 1 / self.queue.S.srv_rate
                 for i in range(1, self.queue.c + 1):
-                    self.env.servers.items.append(Server(stats.erlang(2, scale=aver_ST), self.env.now, i))
+                    k = int(self.queue.S.symbol[1:])
+                    loc = 0
+                    self.env.servers.items.append(Server(stats.erlang(k, loc=loc,  scale=aver_ST/k), self.env.now, i))
                     self.env.server_info.update({i: {'last_active': self.env.now}})
 
-            elif self.queue.A.symbol == "D":
+            elif self.queue.S.symbol == "D":
                 if self.queue.c == 1:
                     # for 1 server the deterministic type expects srv_rate to contain a dataframe
                     # with columns: ["name","ST"]
@@ -216,14 +220,40 @@ class Simulation:
         Plot number of customers in the system and in the queue as a function of time
         """
 
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+
         df_cust, df_sys = self.return_log()
 
-        fig, ax = plt.subplots(figsize=(14, 5))
-        ax.plot(df_sys['t'].values, df_sys['c_s'].values, '-bo', markersize=.1, label='c_s')
-        ax.plot(df_sys['t'].values, df_sys['c_q'].values, '-ro', markersize=.1, label='c_q')
+        sns.set(style="white", palette="muted", color_codes=True)
 
-        ax.set_xlabel('Time [hours]', fontsize=fontsize)
-        ax.set_ylabel('nr of customers', fontsize=fontsize)
-        ax.set_title('System state: {}'.format(self.queue.kendall_notation), fontsize=fontsize)
-        ax.legend(loc='upper right', fontsize=fontsize)
+        # Set up the matplotlib figure
+        f = plt.subplots(figsize=(14, 7), sharex=True)
+        sns.despine(left=True)
 
+        # Plot a simple histogram with binsize determined automatically
+        sns.lineplot(df_sys['t'], df_sys['c_s'], color="b")
+        sns.lineplot(df_sys['t'], df_sys['c_q'], color="r")
+
+    def plot_IAT_ST(self, fontsize=20):
+        """
+        Plot histograms of IAT's and ST's
+        """
+
+        import seaborn as sns
+        import matplotlib.pyplot as plt
+
+        df_cust, df_sys = self.return_log()
+
+        sns.set(style="white", palette="muted", color_codes=True)
+
+        # Set up the matplotlib figure
+        f, axes = plt.subplots(1, 2, figsize=(14, 7), sharex=True)
+        sns.despine(left=True)
+
+        # Plot a simple histogram with binsize determined automatically
+        sns.distplot(df_cust['IAT'], kde=False, color="b", ax=axes[0])
+        sns.distplot(df_cust['ST'], kde=False, color="b", ax=axes[1])
+
+        plt.setp(axes, yticks=[])
+        plt.tight_layout()

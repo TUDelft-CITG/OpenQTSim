@@ -21,7 +21,6 @@ class Customer:
         """"
         Method to move Customer through the system
         """
-
         # request access to server
         self.Sim.c_s += 1
         self.Sim.c_q += 1
@@ -52,9 +51,7 @@ class Customer:
         TSB = self.Env.now - self.Env.epoch
 
         # get ST
-        # ST = server.service_distribution.rvs()
         ST = self.Sim.queue.S.get_ST(server, customer_nr=self.customer_nr)
-        # server.service_distribution.rvs()
 
         # move time ST forward
         yield self.Env.timeout(ST)

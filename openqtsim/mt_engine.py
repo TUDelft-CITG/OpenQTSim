@@ -1,9 +1,9 @@
 import openqtsim
-import pandas as pd
 import numpy as np
 from collections import namedtuple
 
-Task = namedtuple('Task','A, S, c, nr_arr, lam, mu')
+Task = namedtuple('Task', 'A, S, c, nr_arr, lam, mu')
+
 
 def worker(task:Task):
     # calculate the appropriate service rate per server
@@ -28,4 +28,3 @@ def worker(task:Task):
     factor = np.mean(df1["TCWQ"]) / np.mean(df1["ST"])
 
     return factor
-    
