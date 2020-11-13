@@ -5,6 +5,7 @@ import datetime
 import time
 from scipy import stats
 from collections import namedtuple
+import seaborn as sns
 import matplotlib.pyplot as plt
 
 
@@ -64,7 +65,7 @@ class Simulation:
             elif self.queue.A.symbol[0] == "E":
                 # define the average inter arrival time and add distribution with appropriate scaling
                 aver_IAT = 1 / self.queue.A.arr_rate
-                k = int(self.queue.S.symbol[1:])
+                k = int(self.queue.A.symbol[1:])
                 loc = 0
                 self.queue.A.arrival_distribution = stats.erlang(k, loc=loc, scale=aver_IAT / k)
 
@@ -185,12 +186,12 @@ class Simulation:
         df_cust, df_sys = self.return_log()
 
         value = np.mean(df_cust["TCWQ"]) / np.mean(df_cust["ST"])
-        print('Waiting time over service time: {:.4f}'.format(value))
+        print('Waiting time in units of service time: {:.4f}'.format(value))
         print('')
 
         value = (df_cust["TSE"].iloc[-1] - np.sum(df_cust["ITS"])) / df_cust["TSE"].iloc[-1]
         print('Rho_system: system utilisation: {:.4f}'.format(value))
-        value = (df_cust["TSE"].iloc[-1] - (np.sum(df_cust["ITS"])/self.queue.c)) / df_cust["TSE"].iloc[-1]
+        value = (np.sum(df_cust["TCWQ"])/self.queue.c) / df_cust["TSE"].iloc[-1]
         print('Rho_server: server utilisation: {:.4f}'.format(value))
 
         value = np.sum(df_cust["ITS"]) / df_cust["TSE"].iloc[-1]
@@ -220,40 +221,65 @@ class Simulation:
         Plot number of customers in the system and in the queue as a function of time
         """
 
-        import seaborn as sns
-        import matplotlib.pyplot as plt
-
         df_cust, df_sys = self.return_log()
 
         sns.set(style="white", palette="muted", color_codes=True)
 
         # Set up the matplotlib figure
-        f = plt.subplots(figsize=(14, 7), sharex=True)
+        fig, ax = plt.subplots(figsize=(14, 7), sharex=True)
         sns.despine(left=True)
 
         # Plot a simple histogram with binsize determined automatically
-        sns.lineplot(df_sys['t'], df_sys['c_s'], color="b")
-        sns.lineplot(df_sys['t'], df_sys['c_q'], color="r")
+        a = sns.lineplot(x=df_sys['t'], y=df_sys['c_s'], color="b", label="Nr. cust. in system")
+        b = sns.lineplot(x=df_sys['t'], y=df_sys['c_q'], color="r", label="Nr. cust. in queue")
+
+        # set labels
+        a.set_xlabel("Time (hours)", fontsize=fontsize)
+        a.set_ylabel("Nr. of customers", fontsize=fontsize)
+        a.tick_params(labelsize=fontsize)
+
+        # fig.suptitle(self.queue.kendall_notation, fontsize=fontsize)
+
+        return fig, ax
 
     def plot_IAT_ST(self, fontsize=20):
         """
         Plot histograms of IAT's and ST's
         """
 
-        import seaborn as sns
-        import matplotlib.pyplot as plt
 
         df_cust, df_sys = self.return_log()
 
         sns.set(style="white", palette="muted", color_codes=True)
 
         # Set up the matplotlib figure
-        f, axes = plt.subplots(1, 2, figsize=(14, 7), sharex=True)
+        fig, axes = plt.subplots(1, 2, figsize=(14, 7), sharex=True)
         sns.despine(left=True)
 
         # Plot a simple histogram with binsize determined automatically
-        sns.distplot(df_cust['IAT'], kde=False, color="b", ax=axes[0])
-        sns.distplot(df_cust['ST'], kde=False, color="b", ax=axes[1])
+        a = sns.histplot(df_cust['IAT'], kde=False, color="b", ax=axes[0])
+        IAT_av = np.mean(df_cust["IAT"])
+        # axes[0].plot([IAT_av, IAT_av], [0, axes[0].axis()[-1]], linewidth=3, color='k')
+        axes[0].plot([IAT_av, IAT_av], [0, 1000], linewidth=3, color='k')
 
-        plt.setp(axes, yticks=[])
+        b = sns.histplot(df_cust['ST'], kde=False, color="b", ax=axes[1])
+        ST_av = np.mean(df_cust["ST"])
+        # axes[1].plot([ST_av, ST_av], [0, axes[1].axis()[-1]], linewidth=3, color='k')
+        axes[1].plot([ST_av, ST_av], [0, 1000], linewidth=3, color='k')
+
+        # plt.setp(axes, yticks=[])
         plt.tight_layout()
+
+        # set labels
+        a.set_xlabel("Inter arrival times", fontsize=fontsize)
+        a.set_ylabel("Nr. of customers", fontsize=fontsize)
+        a.tick_params(labelsize=fontsize)
+
+        b.set_xlabel("Service times", fontsize=fontsize)
+        b.set_ylabel("Nr. of customers", fontsize=fontsize)
+        b.tick_params(labelsize=fontsize)
+
+        # fig.suptitle(self.queue.kendall_notation, fontsize=fontsize)
+
+        return fig, axes
+

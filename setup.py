@@ -21,6 +21,7 @@ requires = [
     "matplotlib",
     "pandas",
     "numpy",
+    "seaborn",
     "simpy",
     "scipy",
     "sphinx_rtd_theme"
