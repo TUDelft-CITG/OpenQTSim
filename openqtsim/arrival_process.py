@@ -23,4 +23,4 @@ class ArrivalProcess:
             return self.arrival_distribution.rvs()
 
         elif self.symbol == "D":
-            return self.arrival_distribution.loc[customer_nr, ['IAT']].item()
+            return self.arrival_distribution.iloc[customer_nr]["IAT"]

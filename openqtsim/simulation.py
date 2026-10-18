@@ -96,18 +96,9 @@ class Simulation:
                     self.env.server_info.update({i: {'last_active': self.env.now}})
 
             elif self.queue.S.symbol == "D":
-                if self.queue.c == 1:
-                    # for 1 server the deterministic type expects srv_rate to contain a dataframe
-                    # with columns: ["name","ST"]
-                    self.env.servers.items.append(Server(self.queue.S.srv_rate, self.env.now, 1))
-                    self.env.server_info.update({1: {'last_active': self.env.now}})
-                else:
-                    # for n servers the deterministic type expects srv_rate to contain a dataframe
-                    # with columns: ["name","ST","s_id"]
-                    for i in range(1, self.queue.c + 1):
-                        self.env.servers.items.append(Server(self.queue.S.srv_rate[self.queue.S.srv_rate["s_id"] == i],
-                                                             self.env.now, i))
-                        self.env.server_info.update({i: {'last_active': self.env.now}})
+                for i in range(1, self.queue.c + 1):
+                    self.env.servers.items.append(Server(self.queue.S.srv_rate, self.env.now, i))
+                    self.env.server_info.update({i: {'last_active': self.env.now}})
 
         else:
             pass
@@ -120,6 +111,23 @@ class Simulation:
         """
         Run simulation
         """
+
+        for process, table, column in [
+            (self.queue.A, self.queue.A.arr_rate, "IAT"),
+            (self.queue.S, self.queue.S.srv_rate, "ST"),
+        ]:
+            if process.symbol == "D":
+                if not isinstance(table, pd.DataFrame) or column not in table.columns:
+                    raise ValueError("Deterministic input must be a DataFrame with a '{}' column.".format(column))
+                if len(table) < max_arr:
+                    raise ValueError("Deterministic '{}' input has {} rows, but {} arrivals were requested.".format(
+                        column, len(table), max_arr))
+
+        if self.queue.S.symbol == "D" and "s_id" in self.queue.S.srv_rate.columns:
+            assignments = self.queue.S.srv_rate.iloc[:max_arr]["s_id"]
+            if not assignments.isin(range(1, self.queue.c + 1)).all():
+                raise ValueError("Deterministic 's_id' values must identify a server from 1 to {}.".format(
+                    self.queue.c))
 
         self.max_arr = max_arr
 
@@ -199,10 +207,10 @@ class Simulation:
         print('')
 
         value = np.mean(df_sys['c_s'])
-        print('L_s: average nr of customers in the system: {}'.format(value))
+        print('L_s: average nr of customers in the system: {:.4f}'.format(value))
         value = np.mean(df_sys['c_q'])
 
-        print('L_q: average nr of customers in the queue: {}'.format(value))
+        print('L_q: average nr of customers in the queue: {:.4f}'.format(value))
         value = np.mean(df_cust["TCSS"])
         print('W_s: the long term average time spent in the system: {:.4f}'.format(value))
         value = np.mean(df_cust["TCWQ"])
@@ -282,4 +290,3 @@ class Simulation:
         # fig.suptitle(self.queue.kendall_notation, fontsize=fontsize)
 
         return fig, axes
-

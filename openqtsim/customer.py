@@ -28,7 +28,12 @@ class Customer:
         c_s_req = self.Sim.c_s
         c_q_req = self.Sim.c_q
 
-        server = yield self.Env.servers.get()
+        service = self.Sim.queue.S
+        if service.symbol == "D" and "s_id" in service.srv_rate.columns:
+            assigned_server = service.srv_rate.iloc[self.customer_nr - 1]["s_id"]
+            server = yield self.Env.servers.get(lambda server: server.id == assigned_server)
+        else:
+            server = yield self.Env.servers.get()
 
         self.Sim.c_q -= 1
         t_yield = self.Env.now - self.Env.epoch

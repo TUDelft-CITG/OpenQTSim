@@ -16,11 +16,11 @@ class ServiceProcess:
 
     def get_ST(self, server, customer_nr=[]):
         """
-        Return the inter arrival time based on the inter arrival time distribution or deterministic list
+        Return service time; deterministic rows follow one-based customer IDs.
         """
 
         if self.symbol == "M" or self.symbol[0] == "E":
             return server.service_distribution.rvs()
 
         elif self.symbol == "D":
-            return server.service_distribution.loc[customer_nr, ['ST']].item()
+            return server.service_distribution.iloc[customer_nr - 1]["ST"]
