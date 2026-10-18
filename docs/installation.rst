@@ -17,7 +17,7 @@ To install OpenQTSim, run this command in your terminal:
 
 This is the preferred method to install OpenQTSim, as it will always install the most recent stable release.
 
-If you do not `pip`_ installed, this `Python installation guide`_ can guide
+If you do not have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
 
 .. _pip: https://pip.pypa.io
@@ -27,31 +27,42 @@ you through the process.
 From sources
 ------------
 
-The sources for OpenQTSim can be downloaded from the `Github repo`_.
-
-You can either clone the public repository:
+The sources for OpenQTSim can be downloaded from the `Github repo`_:
 
 .. code-block:: bash
 
     # Use git to clone OpenQTSim
-    git clone git://github.com/TUDelft-CITG/OpenQTSim
+    git clone https://github.com/TUDelft-CITG/OpenQTSim.git
+    cd OpenQTSim
 
-
-Or download the `tarball`_:
-
-.. code-block:: bash
-
-    # Use curl to obtain the tarball
-    curl  -OL https://github.com/TUDelft-CITG/OpenQTSim/tarball/master
-
-
-Once you have a copy of the source, you can install it with:
+It is recommended to install OpenQTSim in a separate (conda) environment. Install it in developer
+(editable) mode, so that changes to the source code are used directly:
 
 .. code-block:: bash
 
-    # Use python to install
-    python setup.py install
+    # Create and activate an environment (only needed once)
+    conda create -n OpenQTSim python
+    conda activate OpenQTSim
 
+    # Install OpenQTSim in developer mode
+    pip install -e .
+
+Optional dependencies
+---------------------
+
+The parallel simulations of ``openqtsim.mt_engine`` (the 1000-series example notebooks) use `Dask`_.
+Install Dask together with OpenQTSim with:
+
+.. code-block:: bash
+
+    pip install -e ".[dask]"
+
+To run the tests and the example notebooks, also install pytest and Jupyter:
+
+.. code-block:: bash
+
+    pip install pytest pytest-cov jupyter
+    pytest
 
 .. _Github repo: https://github.com/TUDelft-CITG/OpenQTSim
-.. _tarball: https://github.com/TUDelft-CITG/OpenQTSim/tarball/master
+.. _Dask: https://www.dask.org

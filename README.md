@@ -27,7 +27,7 @@ You can read the [documentation](https://openqtsim.readthedocs.io/en/latest/inst
 
 ## Examples
 
-The benefit of OpenQTSim is the generic set-up. This set-up allows the simulation of a range of queues with a Kendall notation. A number of examples are presented in a seperate [Jupyter Notebook repository](https://github.com/TUDelft-CITG/OpenQTSim-Notebooks). Information on how to use the notebooks is presented in that repository as well.
+The benefit of OpenQTSim is the generic set-up. This set-up allows the simulation of a range of queues with a Kendall notation. A number of examples are presented as Jupyter Notebooks in the [notebooks](notebooks) folder.
 
 The numbered example notebooks in this repository are best read in order:
 
@@ -39,6 +39,7 @@ The numbered example notebooks in this repository are best read in order:
 6. [0006 - M M 1 - 20 arrivals](notebooks/0006%20-%20M%20M%201%20-%2020%20arrivals.ipynb): a simple M/M/1 example.
 7. [0007 - M M 1 - 1 million arrivals](notebooks/0007%20-%20M%20M%201%20-%201%20million%20arrivals.ipynb): shows that a long run approaches the analytical solution.
 8. [0008 - E2 E2 1 example](notebooks/0008%20-%20E2%20E2%201%20example.ipynb): Erlang 2 interarrival and service times, compared with M/M/1 and Kingman's approximation.
+
 The 1000-series notebooks run many simulations in parallel with Dask:
 
 1. [1001 - M M 1 using Dask](notebooks/1001%20-%20M%20M%201%20using%20Dask.ipynb): independent replications of an M/M/1 queue (100,000 customers each), compared with the analytical solution.
