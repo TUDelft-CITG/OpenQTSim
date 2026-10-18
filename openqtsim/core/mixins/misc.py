@@ -6,8 +6,24 @@ import uuid
 class Identifiable:
     """Mixin class: give the object a name and a unique id.
 
-    name: name of the object (e.g. the vessel name)
-    id: unique identifier; a random UUID is generated when omitted
+    Parameters
+    ----------
+    name : str
+        Name of the object (e.g. the vessel name).
+    id : str, optional
+        Unique identifier; a random UUID is generated when omitted.
+
+    Attributes
+    ----------
+    name : str
+        Name of the object.
+    id : str
+        Unique identifier.
+
+    Raises
+    ------
+    ValueError
+        If name is not a nonempty string.
     """
 
     def __init__(self, *args, name, id=None, **kwargs):
@@ -19,7 +35,23 @@ class Identifiable:
 
 
 class ExtraMetadata:
-    """Mixin class: store all leftover keyword arguments in the metadata property (use as last mixin)."""
+    """Mixin class: store all leftover keyword arguments in the metadata property (use as last mixin).
+
+    Parameters
+    ----------
+    **kwargs
+        Leftover keyword arguments.
+
+    Attributes
+    ----------
+    metadata : dict
+        The leftover keyword arguments.
+
+    Raises
+    ------
+    TypeError
+        If ExtraMetadata is not the last mixin.
+    """
 
     def __init__(self, *args, **kwargs):
         mro = type(self).__mro__

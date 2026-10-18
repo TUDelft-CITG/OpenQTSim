@@ -1,3 +1,5 @@
+"""Fast M/M/1 solver based on the FIFO recursion (no SimPy)."""
+
 from scipy import stats
 import numpy as np
 import pandas as pd
@@ -9,17 +11,38 @@ from openqtsim._statistics import calculate_statistics
 
 
 class MM1:
-    """
-    A simple simulation method for MM1 queues
-    - MM1.get_IAT_and_ST: generates lists of IAT's and ST's drawn from exponential distributions
-    - MM1.calculate: values for AT, TSB, TSE, TCSS, TCWG and ITS are calculated per arrival
-    - MM1.get_stats: print basic statistics based on the simulation results
+    """A simple simulation method for M/M/1 queues. The basic time unit is hours.
+
+    - :meth:`get_IAT_and_ST` draws interarrival and service times from exponential distributions;
+    - :meth:`calculate` computes AT, TSB, TSE, TCSS, TCWQ and ITS per arrival;
+    - :meth:`get_stats` prints and returns basic statistics of the results.
+
+    Parameters
+    ----------
+    lam : float
+        Arrival rate (customers per hour).
+    mu : float
+        Service rate (customers per hour).
+    nr_arr : int
+        Number of customers.
+    arrival_seed : int, optional
+        Seed of the interarrival time stream (keyword-only).
+    service_seed : int, optional
+        Seed of the service time stream (keyword-only); must differ from arrival_seed.
+
+    Attributes
+    ----------
+    lam, mu, nr_arr
+        The inputs.
+    arrival_rng, service_rng : numpy.random.Generator
+        Random generators of the interarrival and service times.
+
+    Raises
+    ------
+    ValueError
+        If an input is invalid.
     """
     def __init__(self, lam, mu, nr_arr, *, arrival_seed=None, service_seed=None):
-        """
-        Initialization the basic time unit is hours.
-        """
-
         validate_positive_rate(lam, "lam")
         validate_positive_rate(mu, "mu")
         validate_positive_integer(nr_arr, "nr_arr")
@@ -29,8 +52,14 @@ class MM1:
         self.nr_arr = nr_arr  # nr of customers
 
     def get_IAT_and_ST(self):  # generate list of inter arrival times
-        """
-        Generate lists of IAT's and ST's drawn from exponential distributions.
+        """Draw interarrival and service times from exponential distributions.
+
+        Returns
+        -------
+        IAT : numpy.ndarray
+            ``nr_arr`` interarrival times (hours) with mean 1 / lam.
+        ST : numpy.ndarray
+            ``nr_arr`` service times (hours) with mean 1 / mu.
         """
 
         rv_iat = stats.expon(scale=1 / self.lam)
@@ -45,8 +74,30 @@ class MM1:
         return IAT, ST
 
     def calculate(self, IAT, ST):
-        """
-        Values for AT, TSB, TSE, TCSS, TCWG and ITS are calculated per arrival
+        """Calculate the customer log of a single-server FIFO queue.
+
+        Any interarrival and service times can be given (not only exponential ones), e.g. the
+        output of :meth:`get_IAT_and_ST` or a deterministic example.
+
+        Parameters
+        ----------
+        IAT : array_like
+            ``nr_arr`` finite nonnegative interarrival times (hours).
+        ST : array_like
+            ``nr_arr`` finite nonnegative service times (hours).
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per customer with the columns ``IAT``, ``ST``, ``AT`` (arrival time), ``TSB``
+            (time service begins), ``TSE`` (time service ends), ``TCSS`` (time customer spends in
+            the system), ``TCWQ`` (time customer waits in the queue) and ``ITS`` (idle time of the
+            server before this customer).
+
+        Raises
+        ------
+        ValueError
+            If IAT or ST is not one-dimensional with ``nr_arr`` valid values.
         """
 
         for values, name in [(IAT, "IAT"), (ST, "ST")]:
@@ -103,8 +154,18 @@ class MM1:
         return df_cust
 
     def get_stats(self, df_cust):
-        """
-        Print and return statistics over time 0 through the last completion.
+        """Print and return statistics over time 0 through the last completion.
+
+        Parameters
+        ----------
+        df_cust : pandas.DataFrame
+            Customer log from :meth:`calculate`.
+
+        Returns
+        -------
+        dict
+            Statistics of the customer log
+            (e.g. ``waiting_factor``, ``Rho_system``, ``P_0``, ``W_s``, ``W_q``, ``IAT`` and ``ST``).
         """
 
         summary = calculate_statistics(df_cust)

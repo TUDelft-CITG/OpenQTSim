@@ -1,4 +1,4 @@
-"""Top-level package for queueing."""
+"""OpenQTSim: a discrete event queueing theory simulator (Kendall A/S/c/K/N/D queues)."""
 
 __author__ = "Mark van Koningsveld and Joris den Uijl"
 __email__ = "m.vankoningsveld@tudelft.nl"

@@ -1,15 +1,31 @@
+"""Customer moving through a simulated queue."""
+
 import math
 
 class Customer:
-    """
-    Customer class for use in the OpenQTSim package
+    """Customer class for use in the OpenQTSim package.
+
+    Creating a customer increments the customer counter of the simulation and gives the
+    customer the next one-based customer number.
+
+    Parameters
+    ----------
+    Env : simpy.Environment
+        Simulation environment (with ``servers``, ``server_info`` and ``epoch``).
+    Sim : openqtsim.Simulation
+        The simulation the customer belongs to.
+
+    Attributes
+    ----------
+    Env : simpy.core.Environment
+        Simulation environment.
+    Sim : openqtsim.simulation.Simulation
+        The simulation the customer belongs to.
+    customer_nr : int
+        One-based customer ID (arrival order).
     """
 
     def __init__(self, Env, Sim):
-        """
-        Initialization
-        """
-
         # self.arrival = arrival
         self.Env = Env
         self.Sim = Sim
@@ -18,8 +34,24 @@ class Customer:
         self.customer_nr = Sim.customer_nr
 
     def move(self, IAT, AT):
-        """"
-        Method to move Customer through the system
+        """Move the customer through the system (SimPy process).
+
+        The customer joins the queue, waits for a server (and quay length, if applicable) in
+        FIFO order, is served and departs. A customer with a ``maxwait`` leaves the queue
+        (reneges) when service cannot start in time. System and customer states are logged
+        in the simulation.
+
+        Parameters
+        ----------
+        IAT : float
+            Interarrival time of the customer (hours).
+        AT : float
+            Arrival time of the customer since the start of the simulation (hours).
+
+        Yields
+        ------
+        simpy.events.Event
+            Events the customer waits for (server request, service time).
         """
         # request access to server
         self.Sim.c_s += 1

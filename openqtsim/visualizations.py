@@ -10,7 +10,24 @@ def _decimate_steps(t, y, max_points):
     """Reduce a step series to at most about max_points points.
 
     Each bin keeps its first, last, minimum and maximum point, so peaks and the step structure stay visible.
-    Returns (t, y, decimated).
+
+    Parameters
+    ----------
+    t : numpy.ndarray
+        Times.
+    y : numpy.ndarray
+        Values.
+    max_points : int or None
+        Maximum number of points; None keeps all points.
+
+    Returns
+    -------
+    t : numpy.ndarray
+        Reduced times.
+    y : numpy.ndarray
+        Reduced values.
+    decimated : bool
+        Whether the series was reduced.
     """
     n = len(y)
     if max_points is None or n <= max_points:
@@ -27,9 +44,19 @@ def _decimate_steps(t, y, max_points):
 def plot_system_state(system_state, max_points=100_000, height=500):
     """Step plot of the number of customers in the system and in the queue over time.
 
-    system_state: system log from Simulation.return_log() (columns t, c_s, c_q).
-    max_points: larger traces are reduced (per bin: first, last, minimum and maximum); None plots all points.
-    Returns the plotly figure.
+    Parameters
+    ----------
+    system_state : pandas.DataFrame
+        System log from :meth:`~openqtsim.simulation.Simulation.return_log` (columns t, c_s, c_q).
+    max_points : int or None, default 100_000
+        Larger traces are reduced (per bin: first, last, minimum and maximum); None plots all points.
+    height : int, default 500
+        Figure height in pixels.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        The figure.
     """
     t = system_state["t"].to_numpy()
     fig = go.Figure()
@@ -53,8 +80,22 @@ def plot_system_state(system_state, max_points=100_000, height=500):
 def plot_IAT_ST(customer_log, bins="auto", height=500):
     """Histograms of the interarrival times (IAT) and service times (ST), with their means.
 
-    customer_log: customer log from Simulation.return_log(); reneged customers (no ST) are skipped.
-    The vertical mean lines run over the full height of each panel. Returns the plotly figure.
+    The vertical mean lines run over the full height of each panel.
+
+    Parameters
+    ----------
+    customer_log : pandas.DataFrame
+        Customer log from :meth:`~openqtsim.simulation.Simulation.return_log`; missing values (e.g. the
+        service times of reneged customers) are skipped.
+    bins : int, sequence or str, default "auto"
+        Bins of each histogram, as in :func:`numpy.histogram`.
+    height : int, default 500
+        Figure height in pixels.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        The figure.
     """
     fig = make_subplots(rows=1, cols=2, horizontal_spacing=0.08,
                         subplot_titles=("Interarrival times", "Service times"))
@@ -84,7 +125,18 @@ def plot_IAT_ST(customer_log, bins="auto", height=500):
 
 
 def hover_time(hours):
-    """Format a time in hours with at most two decimals, followed by the time in days."""
+    """Format a time in hours with at most two decimals, followed by the time in days.
+
+    Parameters
+    ----------
+    hours : float
+        Time in hours.
+
+    Returns
+    -------
+    str
+        For example ``"36 h (1.5 days)"``.
+    """
     hours_text = f"{hours:.2f}".rstrip("0").rstrip(".")
     days_text = f"{hours / 24:.2f}".rstrip("0").rstrip(".")
     return f"{hours_text} h ({days_text} days)"
@@ -93,8 +145,20 @@ def hover_time(hours):
 def plot_gantt(log, title=None, height=750):
     """Gantt chart of arrival, waiting, service, departure and reneging per customer visit.
 
-    log: customer log from Simulation.return_log(); one row per visit, labelled by name when available.
-    Returns the plotly figure.
+    Parameters
+    ----------
+    log : pandas.DataFrame
+        Customer log from :meth:`~openqtsim.simulation.Simulation.return_log`; one row per visit, labelled by
+        name when available.
+    title : str, optional
+        Figure title; defaults to the number of customer arrivals.
+    height : int, default 750
+        Figure height in pixels.
+
+    Returns
+    -------
+    plotly.graph_objects.Figure
+        The figure.
     """
     customers = log.sort_values(["AT", "c_id"]).copy()
     customers["wait_end"] = customers["TSB"].fillna(customers["departure"])

@@ -32,7 +32,21 @@ import openqtsim
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.intersphinx', 'sphinx.ext.napoleon', 'sphinx.ext.viewcode']
+
+# numpy-style docstrings: show parameter and return types as plain text instead of cross-references
+napoleon_google_docstring = False
+napoleon_use_param = False
+napoleon_use_rtype = False
+
+# links to the documentation of the packages OpenQTSim builds on
+intersphinx_mapping = {
+    'python': ('https://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
+    'pandas': ('https://pandas.pydata.org/docs', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy', None),
+    'simpy': ('https://simpy.readthedocs.io/en/latest', None),
+}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = []

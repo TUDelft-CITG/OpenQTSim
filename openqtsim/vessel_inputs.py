@@ -12,7 +12,24 @@ from .core.mixins import HasArrivalSchedule, HasHandlingTimes, HasLength, HasMax
 
 
 def _customers_to_info(customers):
-    """Convert mixin-composed customer objects to an info-sheet DataFrame."""
+    """Convert mixin-composed customer objects to an info-sheet DataFrame.
+
+    Parameters
+    ----------
+    customers : list
+        Customer objects composed of Identifiable, HasArrivalSchedule and HasHandlingTimes,
+        and optionally (all or none) HasLength and HasMaxWait.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Info sheet with the columns name, IAT, AT, unloading, loading (and length, maxwait).
+
+    Raises
+    ------
+    ValueError
+        If a customer misses a required mixin or the optional mixins are mixed.
+    """
     rows = []
     for customer in customers:
         missing = [mixin.__name__ for mixin in (Identifiable, HasArrivalSchedule, HasHandlingTimes)
@@ -34,17 +51,49 @@ def _customers_to_info(customers):
 def generate_vessel_tables(info, *, nr_arrivals=None, max_duration_days=None,
                            arrival_distribution="D", service_distribution="D",
                            arrival_seed=None, service_seed=None):
-    """Generate visits from info-sheet rows; specify exactly one stopping limit.
+    """Generate chronological vessel visits from info-sheet rows.
 
-    info is an info-sheet DataFrame or a list of customer objects composed of the mixins
-    Identifiable, HasArrivalSchedule and HasHandlingTimes, optionally with HasLength and HasMaxWait.
-    The columns/properties length and maxwait are optional; without them the output omits them.
-    All input times and the duration limit are in days; returned times are hours.
-    For exponential arrivals, AT is the mean first-arrival time and IAT is the
-    mean return interval of each vessel's independent renewal process.
-    Service durations are fixed or exponential with mean loading + unloading.
-    The duration cutoff includes arrivals at the boundary, not service completion.
-    Ties are ordered by info-sheet row position. Visits recur even after reneging.
+    Every vessel first arrives at AT and then returns every IAT. All input times and the
+    duration limit are in days; returned times are in hours. Specify exactly one stopping limit
+    (nr_arrivals or max_duration_days). The duration cutoff includes arrivals at the boundary,
+    not service completion. Ties are ordered by info-sheet row position. Visits recur even
+    after reneging.
+
+    Parameters
+    ----------
+    info : pandas.DataFrame or list
+        Info sheet with the columns name, IAT, AT, unloading and loading, and optionally length
+        and maxwait; or a list of customer objects composed of the mixins
+        :class:`~openqtsim.core.mixins.misc.Identifiable`, :class:`~openqtsim.core.mixins.customer.HasArrivalSchedule` and
+        :class:`~openqtsim.core.mixins.customer.HasHandlingTimes`, optionally with
+        :class:`~openqtsim.core.mixins.resource.HasLength` and :class:`~openqtsim.core.mixins.customer.HasMaxWait`.
+    nr_arrivals : int, optional
+        Number of visits to generate (keyword-only).
+    max_duration_days : float, optional
+        Generate all visits arriving up to and including this time (days, keyword-only).
+    arrival_distribution : {"D", "M"}, default "D"
+        Deterministic arrivals, or exponential arrivals in which AT is the mean first-arrival
+        time and IAT the mean return interval of each vessel's independent renewal process.
+    service_distribution : {"D", "M"}, default "D"
+        Fixed or exponential service durations with mean loading + unloading.
+    arrival_seed : int, optional
+        Seed of the arrival stream (keyword-only).
+    service_seed : int, optional
+        Seed of the service stream (keyword-only); must differ from arrival_seed.
+
+    Returns
+    -------
+    arrival_table : pandas.DataFrame
+        One row per visit with the columns name, vessel_id, visit, IAT and AT (hours), and length
+        and maxwait (hours) when given; input for a deterministic arrival process.
+    service_table : pandas.DataFrame
+        One row per visit with the columns name and ST (hours); input for a deterministic
+        service process.
+
+    Raises
+    ------
+    ValueError
+        If an input is invalid.
     """
     if isinstance(info, (list, tuple)) and info:
         info = _customers_to_info(info)

@@ -7,7 +7,25 @@ import pandas as pd
 
 
 def create_object(name, classes):
-    """Create a class called name from the given mixins, using the first valid base class order."""
+    """Create a class called name from the given mixins, using the first valid base class order.
+
+    Parameters
+    ----------
+    name : str
+        Name of the new class.
+    classes : list of type
+        Mixins (base classes) of the new class.
+
+    Returns
+    -------
+    type
+        The new class.
+
+    Raises
+    ------
+    TypeError
+        If no valid base class order (MRO) exists.
+    """
     for perm in itertools.permutations(classes):
         try:
             return type(name, perm, {})
@@ -17,6 +35,7 @@ def create_object(name, classes):
 
 
 def _init_parameters(Class):
+    """Yield (class, name, parameter) for all named __init__ parameters along the class' MRO."""
     for cls in Class.mro():
         if cls is object or "__init__" not in cls.__dict__:
             continue
@@ -27,17 +46,42 @@ def _init_parameters(Class):
 
 
 def get_all_init_params(Class):
-    """Return the names of all named __init__ parameters along the class' MRO."""
+    """Return the names of all named __init__ parameters along the class' MRO.
+
+    Parameters
+    ----------
+    Class : type
+        The (mixin-composed) class.
+
+    Returns
+    -------
+    set of str
+        Parameter names.
+    """
     return {name for _, name, _ in _init_parameters(Class)}
 
 
 def inspect_object(Class, candidate_kwargs=None, show_parameter_table=False):
     """Tabulate the required and optional inputs of a (mixin-composed) class.
 
-    candidate_kwargs: optional dict with the inputs you intend to provide; the table then marks
-    each parameter as 'mandatory' (required, not yet provided), 'added', 'optional (used)' or
-    'optional (unused)'.
-    show_parameter_table: display the table; otherwise return (styled table, missing_parameters).
+    Parameters
+    ----------
+    Class : type
+        The (mixin-composed) class.
+    candidate_kwargs : dict, optional
+        Inputs you intend to provide; the table then marks each parameter as 'mandatory'
+        (required, not yet provided), 'added', 'optional (used)' or 'optional (unused)'.
+    show_parameter_table : bool, default False
+        Display the table (instead of returning it).
+
+    Returns
+    -------
+    styled : pandas.io.formats.style.Styler
+        Colour-coded table with the columns parameter, class, default and status
+        (only when show_parameter_table is False).
+    missing_parameters : bool
+        Whether required parameters are missing from candidate_kwargs
+        (only when show_parameter_table is False).
     """
     candidate_kwargs = {} if candidate_kwargs is None else candidate_kwargs
 

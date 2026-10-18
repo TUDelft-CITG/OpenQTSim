@@ -1,3 +1,5 @@
+"""Discrete event simulation (SimPy) of a queue."""
+
 import simpy
 import pandas as pd
 import numpy as np
@@ -15,6 +17,16 @@ from openqtsim.visualizations import plot_IAT_ST, plot_system_state
 
 
 class _PatienceDeadline(simpy.events.Event):
+    """Event that succeeds when a customer's maximum waiting time (maxwait) has passed.
+
+    Parameters
+    ----------
+    env : simpy.Environment
+        Simulation environment.
+    delay : float
+        Maximum waiting time (hours).
+    """
+
     def __init__(self, env, delay):
         super().__init__(env)
         self._ok = True
@@ -24,17 +36,45 @@ class _PatienceDeadline(simpy.events.Event):
 
 
 class Simulation:
-    """
-    A discrete event simulation that simulates the queue.
-    - queue is a queue based on the queue class
-    - arrival_seed and service_seed control separate reproducible random streams
+    """A discrete event simulation that simulates the queue. The basic time unit is hours.
+
+    The queue and its processes are copied, so the input queue is not changed.
+
+    Parameters
+    ----------
+    queue : openqtsim.Queue
+        The queue to simulate.
+    max_arr : int, default 100
+        Maximum number of arrivals (overwritten by :meth:`run`).
+    priority : bool, default False
+        Priority queueing (only False is implemented).
+    arrival_seed : int, optional
+        Seed of the interarrival time stream (keyword-only).
+    service_seed : int, optional
+        Seed of the service time stream (keyword-only); must differ from arrival_seed.
+
+    Attributes
+    ----------
+    queue : openqtsim.queue.Queue
+        Copy of the queue, with the arrival and service distributions.
+    env : simpy.core.Environment
+        Simulation environment, with the ``servers`` store.
+    max_arr : int
+        Maximum number of arrivals.
+    customer_nr : int
+        Number of customers that have arrived.
+    log : dict
+        Customer log (see :meth:`log_customer_state`).
+    system_state : dict
+        System state log (see :meth:`log_system_state`).
+
+    Raises
+    ------
+    ValueError
+        If an input is invalid or not implemented.
     """
 
     def __init__(self, queue, max_arr=100, priority=False, *, arrival_seed=None, service_seed=None):
-        """
-        Initialization (the basic time unit is hours)
-        """
-
         if not isinstance(queue, Queue):
             raise ValueError("queue must be a Queue object.")
         queue.validate()
@@ -143,8 +183,18 @@ class Simulation:
         self.env.process(self.queue.populate(self.env, self))
 
     def run(self, max_arr=1000):
-        """
-        Run simulation
+        """Run the simulation until all arrivals have departed.
+
+        Parameters
+        ----------
+        max_arr : int, default 1000
+            Number of arrivals to simulate.
+
+        Raises
+        ------
+        ValueError
+            If a deterministic input table has too few rows or invalid ``s_id``, ``maxwait`` or
+            ``length`` values, or if a quay length is given without a ``length`` column.
         """
 
         validate_positive_integer(max_arr, "max_arr")
@@ -206,7 +256,27 @@ class Simulation:
         self.env.run()
 
     def request_server(self, customer_nr, assigned_server):
-        """Acquire joint capacity in FIFO order, or leave at the patience deadline."""
+        """Acquire a server (and quay length) in FIFO order, or leave at the patience deadline.
+
+        SimPy process used by :meth:`~openqtsim.customer.Customer.move`.
+
+        Parameters
+        ----------
+        customer_nr : int
+            One-based customer number.
+        assigned_server : int or None
+            Server ID the customer must use, or None for any server.
+
+        Yields
+        ------
+        simpy.events.Event
+            Events the customer waits for.
+
+        Returns
+        -------
+        Server or None
+            The acquired server, or None if the customer reneged.
+        """
         length = self.customer_lengths[customer_nr - 1] if self.customer_lengths is not None else 0
         deadline = None
         if self.customer_maxwait is not None:
@@ -251,18 +321,34 @@ class Simulation:
 
     def log_customer_state(self, customer_id, IAT, AT, ST, TSB, TSE, ITS, s_id,
                            *, status="served", departure=None):
-        """
-        # the following items are logged per customer that enters the system:
-        # c = customer id
-        # IAT = inter arrival time
-        # ST = service time
-        # AT = arrival time
-        # TSB = time service begins
-        # TSE = time service ends
-        # TCSS = time customer spends in the system
-        # TCWQ = time customer waits in the queue
-        # ITS = idle time of the server
-        # s_id = id of server assigned to customer
+        """Log the state of a customer that leaves the system.
+
+        Besides the inputs, the customer's ``name``, ``length`` and ``maxwait`` (from a
+        deterministic input table, if available), ``TCSS`` (time customer spends in the system)
+        and ``TCWQ`` (time customer waits in the queue) are logged.
+
+        Parameters
+        ----------
+        customer_id : int
+            One-based customer ID.
+        IAT : float
+            Interarrival time.
+        AT : float
+            Arrival time.
+        ST : float
+            Service time.
+        TSB : float
+            Time service begins.
+        TSE : float
+            Time service ends.
+        ITS : float
+            Idle time of the server.
+        s_id : int or None
+            ID of the server assigned to the customer.
+        status : {"served", "reneged"}, default "served"
+            Whether the customer was served or left the queue (keyword-only).
+        departure : float, optional
+            Departure time (keyword-only); defaults to TSE.
         """
 
         name = None
@@ -296,11 +382,16 @@ class Simulation:
         self.log["s_id"].append(s_id)
 
     def log_system_state(self, t, c_s, c_q):
-        """
-        # the following items are logged for the state of the system:
-        # t = time (from start of simulation)
-        # c_s = number of customers in the system
-        # c_q = number of customers in the queue
+        """Log the state of the system.
+
+        Parameters
+        ----------
+        t : float
+            Time since the start of the simulation.
+        c_s : int
+            Number of customers in the system.
+        c_q : int
+            Number of customers in the queue.
         """
 
         self.system_state["t"].append(t)
@@ -308,8 +399,14 @@ class Simulation:
         self.system_state["c_q"].append(c_q)
 
     def return_log(self):
-        """
-        Return the log in the form of a pandas data frame.
+        """Return the logs as pandas DataFrames.
+
+        Returns
+        -------
+        df_cust : pandas.DataFrame
+            Customer log, sorted by arrival time ``AT``.
+        df_sys : pandas.DataFrame
+            System state log (``t``, ``c_s``, ``c_q``), sorted by time ``t``.
         """
 
         # convert self.log to dataframe
@@ -323,8 +420,19 @@ class Simulation:
         return df_cust, df_sys
 
     def get_stats(self):
-        """
-        Print and return statistics over time 0 through the last departure.
+        """Print and return statistics over time 0 through the last departure.
+
+        Returns
+        -------
+        dict
+            Statistics of the customer log, e.g. ``waiting_factor``, ``Rho_system``,
+            ``Rho_server``, ``P_0``, ``L_s``, ``L_q``, ``W_s``, ``W_q``, ``IAT`` and ``ST``
+            (and ``served`` and ``reneged`` when customers have a maxwait).
+
+        Raises
+        ------
+        ValueError
+            If not all arrived customers have departed.
         """
 
         df_cust, _ = self.return_log()
@@ -369,18 +477,38 @@ class Simulation:
         return summary
 
     def plot_system_state(self, max_points=100_000, height=500):
-        """
-        Plotly step plot of the number of customers in the system and in the queue as a function of time.
+        """Plotly step plot of the number of customers in the system and in the queue over time.
 
-        Traces with more than max_points points are reduced (per bin: first, last, minimum and maximum).
+        Parameters
+        ----------
+        max_points : int, default 100_000
+            Traces with more points are reduced (per bin: first, last, minimum and maximum).
+        height : int, default 500
+            Figure height in pixels.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            The figure.
         """
 
         _, df_sys = self.return_log()
         return plot_system_state(df_sys, max_points=max_points, height=height)
 
     def plot_IAT_ST(self, bins="auto", height=500):
-        """
-        Plotly histograms of the interarrival times and service times, with their means.
+        """Plotly histograms of the interarrival times and service times, with their means.
+
+        Parameters
+        ----------
+        bins : int, sequence or str, default "auto"
+            Bins of each histogram, as in :func:`numpy.histogram`.
+        height : int, default 500
+            Figure height in pixels.
+
+        Returns
+        -------
+        plotly.graph_objects.Figure
+            The figure.
         """
 
         df_cust, _ = self.return_log()

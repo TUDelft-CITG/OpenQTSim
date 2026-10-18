@@ -1,3 +1,5 @@
+"""Queue described by Kendall's notation A/S/c/K/N/D."""
+
 import numpy as np
 import pandas as pd
 
@@ -9,6 +11,8 @@ from openqtsim._validation import validate_positive_integer, validate_positive_r
 
 
 class _NotGiven:
+    """Sentinel for an omitted number of servers (shown as the default value 1)."""
+
     def __repr__(self):
         return "1"
 
@@ -17,27 +21,47 @@ _C_NOT_GIVEN = _NotGiven()
 
 
 class Queue:
-    """
-    Queueing class based on Kendall's notation, in which:
-    - A is the arrival process
-    - S is the service time distribution
-    - c is the number of servers
-    - K is the number of places in the system
-    - N is the calling population
-    - D is the queue discipline
+    """Queueing class based on Kendall's notation A/S/c/K/N/D.
+
+    Without inputs the queue is an M/M/1 queue.
+
+    Parameters
+    ----------
+    A : ArrivalProcess, default ArrivalProcess()
+        The arrival process.
+    S : ServiceProcess, default ServiceProcess()
+        The service process.
+    c : int, default 1
+        The number of servers.
+    K : float, default numpy.inf
+        The number of places in the system (only infinity is implemented).
+    N : float, default numpy.inf
+        The calling population (only infinity is implemented).
+    D : str, default "FIFO"
+        The queue discipline (only "FIFO" is implemented).
+    quay_length : float, optional
+        Total length (m) that customers in service can share, e.g. a quay wall. Customers then
+        need a free server and sufficient remaining length; a ``length`` column is required in a
+        deterministic input table. None (default) disables the length limit.
+    station : object, optional
+        Service station composed of mixins (see :func:`~openqtsim.core.utils.create_object`). It must include
+        :class:`~openqtsim.core.mixins.resource.HasResource` (``nr_resources`` sets c) and may include
+        :class:`~openqtsim.core.mixins.resource.HasLength` (``length`` sets quay_length). Omit c and quay_length
+        (or give matching values) when a station is given.
+
+    Attributes
+    ----------
+    A, S, c, K, N, D, quay_length, station
+        The inputs (c and quay_length taken from the station when given).
+
+    Raises
+    ------
+    ValueError
+        If the inputs are invalid, conflict with the station or are not implemented.
     """
 
     def __init__(self, A=ArrivalProcess(), S=ServiceProcess(), c=_C_NOT_GIVEN, K=np.inf, N=np.inf, D="FIFO",
                  *, quay_length=None, station=None):
-        """
-        The first six inputs are the typical Kendall inputs. Without inputs the queue object returns an M/M/1 object as
-        default (c defaults to 1).
-
-        station: optional service station object composed of mixins. It must include HasResource
-        (nr_resources sets c) and may include HasLength (length sets quay_length); omit c and
-        quay_length (or give matching values) when a station is given.
-        """
-
         if station is not None:
             self._check_station(station)
             for name, given, value, not_given in [
@@ -60,15 +84,23 @@ class Queue:
 
     @staticmethod
     def _check_station(station):
+        """Raise a ValueError if the station does not include the HasResource mixin."""
         if not isinstance(station, HasResource):
             raise ValueError("station must include the HasResource mixin.")
 
     @staticmethod
     def _station_length(station):
+        """Return the station's length, or None if it does not include the HasLength mixin."""
         return station.length if isinstance(station, HasLength) else None
 
     def validate(self):
-        """Reject configurations not implemented by the simulation."""
+        """Check the queue and reject configurations not implemented by the simulation.
+
+        Raises
+        ------
+        ValueError
+            If an input is invalid or not implemented (finite K or N, other disciplines than FIFO).
+        """
         if not isinstance(self.A, ArrivalProcess) or not isinstance(self.S, ServiceProcess):
             raise ValueError("A and S must be ArrivalProcess and ServiceProcess objects.")
         validate_positive_integer(self.c, "c")
@@ -91,9 +123,21 @@ class Queue:
         validate_process(self.S.symbol, self.S.srv_rate, "srv_rate", "ST")
 
     def populate(self, Env, Sim):
-        """
-        While the simulation time does not exceed the maximum duration, generate customers
-        according to the distribution of the arrival process to populate the queue
+        """Generate customers according to the arrival process (SimPy process).
+
+        Customers are generated until the maximum number of arrivals of the simulation is reached.
+
+        Parameters
+        ----------
+        Env : simpy.Environment
+            Simulation environment.
+        Sim : openqtsim.Simulation
+            The simulation to populate.
+
+        Yields
+        ------
+        simpy.events.Timeout
+            The interarrival time until the next customer arrives.
         """
 
         # Simulation stops either when max arrivals (max_arr) is reached or the tolerance limits are achieved
@@ -115,17 +159,37 @@ class Queue:
 
     @property
     def kendall_notation(self):
-        """
-        Return queue name according to the Kendall notation.
-        """
+        """str: Queue name according to Kendall's notation, e.g. "M/M/1/inf/inf/FIFO"."""
 
         return "{}/{}/{}/{}/{}/{}".format(
             self.A.symbol, self.S.symbol, str(self.c), str(self.K), str(self.N), self.D
         )
 
     def occupancy_to_waitingfactor(self, utilisation=.3, nr_of_servers_to_chk=4, poly_order=6):
-        """
-        Waiting time factor (E2/E2/n or M/E2/n) queueing theory using 6th order polynomial regression)
+        """Return the waiting time factor for a berth occupancy, from the PIANC/Groenveld tables.
+
+        A polynomial is fitted through the tabulated waiting time factors (mean waiting time in
+        units of mean service time) as a function of the berth occupancy, for the given number of
+        servers. Supported queues are M/M/n, M/E2/n and E2/E2/n.
+
+        Parameters
+        ----------
+        utilisation : float, default 0.3
+            Berth occupancy (server utilisation).
+        nr_of_servers_to_chk : int, default 4
+            Number of servers (a column of the table).
+        poly_order : int, default 6
+            Order of the fitted polynomial.
+
+        Returns
+        -------
+        float
+            Waiting time factor.
+
+        Raises
+        ------
+        ValueError
+            If the queue type is not supported.
         """
 
         kendall = "{}/{}/{}".format(self.A.symbol, self.S.symbol, str(self.c))
@@ -204,8 +268,30 @@ class Queue:
         return waiting_factor
 
     def waitingfactor_to_occupancy(self, factor=.3, nr_of_servers_to_chk=4, poly_order=6):
-        """
-        Waiting time factor (E2/E2/n or M/E2/n) queueing theory using 6th order polynomial regression)
+        """Return the berth occupancy for a waiting time factor, from the PIANC/Groenveld tables.
+
+        Inverse of :meth:`occupancy_to_waitingfactor`: a polynomial is fitted through the
+        tabulated berth occupancies as a function of the waiting time factor, for the given number
+        of servers. Supported queues are M/M/n, M/E2/n and E2/E2/n.
+
+        Parameters
+        ----------
+        factor : float, default 0.3
+            Waiting time factor (mean waiting time in units of mean service time).
+        nr_of_servers_to_chk : int, default 4
+            Number of servers (a column of the table).
+        poly_order : int, default 6
+            Order of the fitted polynomial.
+
+        Returns
+        -------
+        float
+            Berth occupancy (server utilisation).
+
+        Raises
+        ------
+        ValueError
+            If the queue type is not supported.
         """
 
         kendall = "{}/{}/{}".format(self.A.symbol, self.S.symbol, str(self.c))

@@ -9,8 +9,22 @@ from openqtsim._validation import validate_nonnegative_number, validate_positive
 class HasArrivalSchedule:
     """Mixin class: the customer arrives repeatedly.
 
-    AT: (mean) time of the first arrival
-    IAT: (mean) interval between subsequent arrivals of the same customer
+    Parameters
+    ----------
+    AT : float
+        (Mean) time of the first arrival.
+    IAT : float
+        (Mean) interval between subsequent arrivals of the same customer.
+
+    Attributes
+    ----------
+    AT, IAT : float
+        The inputs.
+
+    Raises
+    ------
+    ValueError
+        If AT is negative or IAT is not positive (or either is not finite).
     """
 
     def __init__(self, *args, AT, IAT, **kwargs):
@@ -24,8 +38,22 @@ class HasArrivalSchedule:
 class HasHandlingTimes:
     """Mixin class: the customer's (mean) service time is unloading + loading.
 
-    unloading: (mean) unloading time
-    loading: (mean) loading time
+    Parameters
+    ----------
+    unloading : float, default 0
+        (Mean) unloading time.
+    loading : float, default 0
+        (Mean) loading time.
+
+    Attributes
+    ----------
+    unloading, loading : float
+        The inputs.
+
+    Raises
+    ------
+    ValueError
+        If unloading or loading is not a finite nonnegative number.
     """
 
     def __init__(self, *args, unloading=0, loading=0, **kwargs):
@@ -37,13 +65,27 @@ class HasHandlingTimes:
 
     @property
     def service_time(self):
+        """float: (Mean) service time, unloading + loading."""
         return self.unloading + self.loading
 
 
 class HasMaxWait:
     """Mixin class: the customer reneges when it cannot start service within maxwait.
 
-    maxwait: maximum waiting time; 0 allows immediate service only
+    Parameters
+    ----------
+    maxwait : float
+        Maximum waiting time; 0 allows immediate service only.
+
+    Attributes
+    ----------
+    maxwait : float
+        Maximum waiting time.
+
+    Raises
+    ------
+    ValueError
+        If maxwait is not a finite nonnegative number.
     """
 
     def __init__(self, *args, maxwait, **kwargs):

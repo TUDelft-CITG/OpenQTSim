@@ -1,7 +1,23 @@
+"""Statistics of a simulated customer log (utilisation, queue lengths, waiting times)."""
+
 import numpy as np
 
 
 def _occupied_time(starts, ends):
+    """Return the total length of the union of the intervals [starts, ends).
+
+    Parameters
+    ----------
+    starts : numpy.ndarray
+        Start times of the intervals.
+    ends : numpy.ndarray
+        End times of the intervals.
+
+    Returns
+    -------
+    float
+        Total time covered by at least one interval.
+    """
     if len(starts) == 0:
         return 0.0
     order = np.argsort(starts, kind="stable")
@@ -12,7 +28,35 @@ def _occupied_time(starts, ends):
 
 
 def calculate_statistics(customers, servers=1):
-    """Summarise all departure intervals, including queue abandonment."""
+    """Summarise a customer log, including customers that reneged (abandoned the queue).
+
+    Time averages are taken over the observation horizon from time 0 to the last departure.
+
+    Parameters
+    ----------
+    customers : pandas.DataFrame
+        Customer log (e.g. from :meth:`~openqtsim.simulation.Simulation.return_log` or
+        :meth:`~openqtsim.mm1.MM1.calculate`) with at least the columns ``IAT``, ``AT``, ``TSB`` and
+        ``TSE``, and optionally ``TCWQ``, ``departure``, ``status`` and ``maxwait``.
+    servers : int, default 1
+        Number of servers (c), used for the server utilisation.
+
+    Returns
+    -------
+    dict
+        Observation horizon (``observation_start``, ``observation_end``, ``observation_duration``),
+        number of ``customers``, ``waiting_factor`` (mean waiting time / mean service time, None if
+        the mean service time is zero), ``Rho_system`` (fraction of time at least one server is
+        busy), ``Rho_server`` (server utilisation), ``P_0`` (probability that the system is empty),
+        ``L_s`` and ``L_q`` (mean number of customers in the system and in the queue),
+        ``W_s`` and ``W_q`` (mean time in the system and in the queue) and the mean ``IAT`` and ``ST``.
+        If customers have a ``maxwait``, also the number of customers ``served`` and ``reneged``.
+
+    Raises
+    ------
+    ValueError
+        If the log is empty or the observation horizon is not positive and finite.
+    """
     if customers.empty:
         raise ValueError("Statistics require at least one completed customer.")
     departures = customers["departure"] if "departure" in customers else customers["TSE"]
