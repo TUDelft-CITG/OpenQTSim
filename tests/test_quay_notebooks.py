@@ -7,6 +7,8 @@ import pandas as pd
 import plotly.graph_objects as go
 import pytest
 
+from openqtsim.visualizations import hover_time
+
 
 @pytest.mark.parametrize("arrival,service", [("D", "D"), ("D", "M"), ("M", "D"), ("M", "M")])
 def test_quay_notebook_executes_from_info_only(monkeypatch, arrival, service):
@@ -35,9 +37,15 @@ def test_quay_notebook_executes_from_info_only(monkeypatch, arrival, service):
         assert notebook.cells[0].source.startswith(f"# {title}\n")
         assert namespace["arrival_distribution"] == arrival
         assert namespace["service_distribution"] == service
+        assert "inspect_object(Vessel, show_parameter_table=True)" in [cell.source for cell in notebook.cells]
+        assert "inspect_object(Quay, show_parameter_table=True)" in [cell.source for cell in notebook.cells]
+        quay = namespace["quay"]
+        assert (quay.name, quay.nr_resources, quay.length) == ("Quay", 2, 200)
+        assert namespace["q"].station is quay and namespace["q"].c == 2 and namespace["q"].quay_length == 200
+        assert [vessel.name for vessel in namespace["vessels"]] == namespace["info"]["name"].tolist()
         arrivals = namespace["arrival_table"]
         services = namespace["service_table"]
-        log = namespace["customers"]
+        log = namespace["df"]
         assert len(arrivals) == len(services) == len(log) == 20
         np.testing.assert_allclose(arrivals.IAT.cumsum(), arrivals.AT)
         np.testing.assert_allclose(log.AT, arrivals.AT, atol=1e-5)
@@ -52,6 +60,6 @@ def test_quay_notebook_executes_from_info_only(monkeypatch, arrival, service):
         red = next(trace for trace in namespace["fig"].data if trace.name == "Reneged")
         assert red.marker.color == "red" and red.marker.symbol == "x"
         np.testing.assert_allclose(red.x, reneged.departure)
-        assert namespace["hover_time"](48) == "48 h (2 days)"
+        assert hover_time(48) == "48 h (2 days)"
     finally:
         plt.close("all")

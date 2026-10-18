@@ -16,6 +16,12 @@ def validate_positive_rate(value, name):
         raise ValueError("{} must be a finite positive number.".format(name))
 
 
+def validate_nonnegative_number(value, name):
+    if (isinstance(value, (bool, np.bool_)) or not isinstance(value, Real)
+            or not np.isfinite(value) or value < 0):
+        raise ValueError("{} must be a finite nonnegative number.".format(name))
+
+
 def validate_seed(seed, name="seed"):
     if seed is not None and (
         isinstance(seed, (bool, np.bool_)) or not isinstance(seed, Integral)

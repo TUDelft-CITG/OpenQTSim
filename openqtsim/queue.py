@@ -4,7 +4,16 @@ import pandas as pd
 from openqtsim.customer import Customer
 from openqtsim.arrival_process import ArrivalProcess
 from openqtsim.service_process import ServiceProcess
+from openqtsim.core.mixins import HasLength, HasResource
 from openqtsim._validation import validate_positive_integer, validate_positive_rate, validate_process
+
+
+class _NotGiven:
+    def __repr__(self):
+        return "1"
+
+
+_C_NOT_GIVEN = _NotGiven()
 
 
 class Queue:
@@ -18,21 +27,45 @@ class Queue:
     - D is the queue discipline
     """
 
-    def __init__(self, A=ArrivalProcess(), S=ServiceProcess(), c=1, K=np.inf, N=np.inf, D="FIFO",
-                 *, quay_length=None):
+    def __init__(self, A=ArrivalProcess(), S=ServiceProcess(), c=_C_NOT_GIVEN, K=np.inf, N=np.inf, D="FIFO",
+                 *, quay_length=None, station=None):
         """
         The first six inputs are the typical Kendall inputs. Without inputs the queue object returns an M/M/1 object as
-        default
+        default (c defaults to 1).
+
+        station: optional service station object composed of mixins. It must include HasResource
+        (nr_resources sets c) and may include HasLength (length sets quay_length); omit c and
+        quay_length (or give matching values) when a station is given.
         """
+
+        if station is not None:
+            self._check_station(station)
+            for name, given, value, not_given in [
+                ("c", c, station.nr_resources, _C_NOT_GIVEN),
+                ("quay_length", quay_length, self._station_length(station), None),
+            ]:
+                if given is not not_given and given != value:
+                    raise ValueError("{} conflicts with the station; omit it when a station is given.".format(name))
+            c, quay_length = station.nr_resources, self._station_length(station)
 
         self.A = A
         self.S = S
-        self.c = c
+        self.c = 1 if c is _C_NOT_GIVEN else c
         self.K = K
         self.N = N
         self.D = D
         self.quay_length = quay_length
+        self.station = station
         self.validate()
+
+    @staticmethod
+    def _check_station(station):
+        if not isinstance(station, HasResource):
+            raise ValueError("station must include the HasResource mixin.")
+
+    @staticmethod
+    def _station_length(station):
+        return station.length if isinstance(station, HasLength) else None
 
     def validate(self):
         """Reject configurations not implemented by the simulation."""
@@ -41,6 +74,11 @@ class Queue:
         validate_positive_integer(self.c, "c")
         if self.quay_length is not None:
             validate_positive_rate(self.quay_length, "quay_length")
+        station = getattr(self, "station", None)
+        if station is not None:
+            self._check_station(station)
+            if self.c != station.nr_resources or self.quay_length != self._station_length(station):
+                raise ValueError("c and quay_length must match the station's nr_resources and length.")
         for name, value in [("K", self.K), ("N", self.N)]:
             if (isinstance(value, (bool, np.bool_)) or not np.isscalar(value)
                     or not isinstance(value, (int, float, np.integer, np.floating))

@@ -12,3 +12,6 @@ from .queue import Queue
 from .service_process import ServiceProcess
 from .simulation import Simulation
 from .vessel_inputs import generate_vessel_tables
+from . import core
+from .core import create_object, inspect_object
+from .visualizations import plot_gantt

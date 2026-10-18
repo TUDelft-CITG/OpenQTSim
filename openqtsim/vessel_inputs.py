@@ -8,6 +8,27 @@ import pandas as pd
 
 from ._random import create_random_streams
 from ._validation import validate_positive_integer, validate_positive_rate
+from .core.mixins import HasArrivalSchedule, HasHandlingTimes, HasLength, HasMaxWait, Identifiable
+
+
+def _customers_to_info(customers):
+    """Convert mixin-composed customer objects to an info-sheet DataFrame."""
+    rows = []
+    for customer in customers:
+        missing = [mixin.__name__ for mixin in (Identifiable, HasArrivalSchedule, HasHandlingTimes)
+                   if not isinstance(customer, mixin)]
+        if missing:
+            raise ValueError("Customer objects must include the mixins: {}.".format(", ".join(missing)))
+        row = {"name": customer.name, "IAT": customer.IAT, "AT": customer.AT,
+               "unloading": customer.unloading, "loading": customer.loading}
+        if isinstance(customer, HasLength):
+            row["length"] = customer.length
+        if isinstance(customer, HasMaxWait):
+            row["maxwait"] = customer.maxwait
+        rows.append(row)
+    if any(row.keys() != rows[0].keys() for row in rows):
+        raise ValueError("Either all or none of the customers must include HasLength (and HasMaxWait).")
+    return pd.DataFrame(rows)
 
 
 def generate_vessel_tables(info, *, nr_arrivals=None, max_duration_days=None,
@@ -15,6 +36,9 @@ def generate_vessel_tables(info, *, nr_arrivals=None, max_duration_days=None,
                            arrival_seed=None, service_seed=None):
     """Generate visits from info-sheet rows; specify exactly one stopping limit.
 
+    info is an info-sheet DataFrame or a list of customer objects composed of the mixins
+    Identifiable, HasArrivalSchedule and HasHandlingTimes, optionally with HasLength and HasMaxWait.
+    The columns/properties length and maxwait are optional; without them the output omits them.
     All input times and the duration limit are in days; returned times are hours.
     For exponential arrivals, AT is the mean first-arrival time and IAT is the
     mean return interval of each vessel's independent renewal process.
@@ -22,12 +46,15 @@ def generate_vessel_tables(info, *, nr_arrivals=None, max_duration_days=None,
     The duration cutoff includes arrivals at the boundary, not service completion.
     Ties are ordered by info-sheet row position. Visits recur even after reneging.
     """
+    if isinstance(info, (list, tuple)) and info:
+        info = _customers_to_info(info)
     if not isinstance(info, pd.DataFrame) or info.empty or not info.columns.is_unique:
-        raise ValueError("info must be a nonempty DataFrame with unique columns.")
-    required = ["name", "IAT", "AT", "length", "maxwait", "unloading", "loading"]
+        raise ValueError("info must be a nonempty DataFrame (or list of customer objects) with unique columns.")
+    required = ["name", "IAT", "AT", "unloading", "loading"]
     missing = [column for column in required if column not in info]
     if missing:
         raise ValueError("info is missing columns: {}.".format(", ".join(missing)))
+    optional = [column for column in ("length", "maxwait") if column in info]
     for symbol, label in [(arrival_distribution, "arrival"), (service_distribution, "service")]:
         if symbol not in ("D", "M"):
             raise ValueError("{} distribution must be 'D' or 'M'.".format(label))
@@ -39,14 +66,14 @@ def generate_vessel_tables(info, *, nr_arrivals=None, max_duration_days=None,
         validate_positive_rate(max_duration_days, "max_duration_days")
     if not info["name"].map(lambda value: isinstance(value, str) and bool(value.strip())).all():
         raise ValueError("Vessel names must be nonempty strings.")
-    for column in required[1:]:
+    for column in required[1:] + optional:
         if not info[column].map(
             lambda value: isinstance(value, Real) and not isinstance(value, (bool, np.bool_))
             and np.isfinite(value) and value >= 0
         ).all():
             raise ValueError("{} must contain finite nonnegative numbers.".format(column))
     for column in ("IAT", "length"):
-        if (info[column] <= 0).any():
+        if column in info and (info[column] <= 0).any():
             raise ValueError("{} must contain positive numbers.".format(column))
     means = info["unloading"].to_numpy(dtype=float) + info["loading"].to_numpy(dtype=float)
     if not np.isfinite(means).all() or (service_distribution == "M" and (means <= 0).any()):
@@ -67,11 +94,15 @@ def generate_vessel_tables(info, *, nr_arrivals=None, max_duration_days=None,
             break
         row = rows[vessel]
         duration = service_rng.exponential(means[vessel]) if service_distribution == "M" else means[vessel]
-        arrivals.append({
+        arrival = {
             "name": row["name"], "vessel_id": vessel + 1, "visit": visit,
             "IAT": (time - previous) * 24, "AT": time * 24,
-            "length": row["length"], "maxwait": row["maxwait"] * 24,
-        })
+        }
+        if "length" in optional:
+            arrival["length"] = row["length"]
+        if "maxwait" in optional:
+            arrival["maxwait"] = row["maxwait"] * 24
+        arrivals.append(arrival)
         services.append({"name": row["name"], "ST": duration * 24})
         previous = time
         interval = arrival_rng.exponential(row["IAT"]) if arrival_distribution == "M" else row["IAT"]
@@ -80,10 +111,10 @@ def generate_vessel_tables(info, *, nr_arrivals=None, max_duration_days=None,
             raise ValueError("Return intervals must advance arrival time by a finite positive amount.")
         heapq.heappush(pending, (following, vessel, visit + 1))
     arrival_table = pd.DataFrame(arrivals, columns=[
-        "name", "vessel_id", "visit", "IAT", "AT", "length", "maxwait"])
+        "name", "vessel_id", "visit", "IAT", "AT", *optional])
     service_table = pd.DataFrame(services, columns=["name", "ST"])
     if not arrival_table.empty:
-        times = arrival_table[["IAT", "AT", "maxwait"]].to_numpy()
+        times = arrival_table[["IAT", "AT", *(["maxwait"] if "maxwait" in optional else [])]].to_numpy()
         if not np.isfinite(times).all() or not np.isfinite(service_table["ST"]).all():
             raise ValueError("Generated time values overflowed when converted to hours.")
     return arrival_table, service_table

@@ -28,6 +28,7 @@ requires = [
     "openpyxl",
     "plotly",
     "nbformat>=4.2",
+    "jinja2",
     "sphinx_rtd_theme",
 ]
 
@@ -63,7 +64,7 @@ setup(
     include_package_data=True,
     keywords="Queueing Theory",
     name="openqtsim",
-    packages=find_packages(include=["openqtsim"]),
+    packages=find_packages(include=["openqtsim", "openqtsim.*"]),
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=tests_require,
