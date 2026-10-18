@@ -1,6 +1,9 @@
 from scipy import stats
 import numpy as np
 import pandas as pd
+from openqtsim._validation import (
+    validate_positive_integer, validate_positive_rate, validate_process, validate_seed,
+)
 
 
 class MM1:
@@ -15,7 +18,10 @@ class MM1:
         Initialization the basic time unit is hours.
         """
 
-        # todo: consider to remove seed
+        validate_positive_rate(lam, "lam")
+        validate_positive_rate(mu, "mu")
+        validate_positive_integer(nr_arr, "nr_arr")
+        validate_seed(seed)
         self.lam = lam  # arrivals per hour
         self.mu = mu  # departures per hour
         self.nr_arr = nr_arr  # nr of customers
@@ -42,6 +48,11 @@ class MM1:
         """
         Values for AT, TSB, TSE, TCSS, TCWG and ITS are calculated per arrival
         """
+
+        for values, name in [(IAT, "IAT"), (ST, "ST")]:
+            if np.ndim(values) != 1 or len(values) != self.nr_arr:
+                raise ValueError("{} must be a one-dimensional sequence with nr_arr values.".format(name))
+            validate_process("D", pd.DataFrame({name: values}), name, name)
 
         df_cust = pd.DataFrame()
         AT = []

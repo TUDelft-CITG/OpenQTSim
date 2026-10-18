@@ -1,4 +1,4 @@
-
+from openqtsim._validation import validate_process
 
 class ArrivalProcess:
     """
@@ -11,6 +11,7 @@ class ArrivalProcess:
         arr_rate: arrivals per hour
         """
 
+        validate_process(symbol, arr_rate, "arr_rate", "IAT")
         self.symbol = symbol
         self.arr_rate = arr_rate
 

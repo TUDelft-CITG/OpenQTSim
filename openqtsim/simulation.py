@@ -7,6 +7,8 @@ from scipy import stats
 from collections import namedtuple
 import seaborn as sns
 import matplotlib.pyplot as plt
+from openqtsim.queue import Queue
+from openqtsim._validation import validate_positive_integer, validate_seed
 
 
 class Simulation:
@@ -20,6 +22,14 @@ class Simulation:
         """
         Initialization (the basic time unit is hours)
         """
+
+        if not isinstance(queue, Queue):
+            raise ValueError("queue must be a Queue object.")
+        queue.validate()
+        validate_positive_integer(max_arr, "max_arr")
+        validate_seed(seed)
+        if not isinstance(priority, (bool, np.bool_)) or priority:
+            raise ValueError("priority only supports False; priority queues are not implemented.")
 
         self.queue = queue
         self.max_arr = max_arr
@@ -100,10 +110,6 @@ class Simulation:
                     self.env.servers.items.append(Server(self.queue.S.srv_rate, self.env.now, i))
                     self.env.server_info.update({i: {'last_active': self.env.now}})
 
-        else:
-            pass
-            # Todo: add the option of having priority arrivals?
-
         # initiate queue populating process
         self.env.process(self.queue.populate(self.env, self))
 
@@ -112,20 +118,25 @@ class Simulation:
         Run simulation
         """
 
+        validate_positive_integer(max_arr, "max_arr")
+        self.queue.validate()
         for process, table, column in [
             (self.queue.A, self.queue.A.arr_rate, "IAT"),
             (self.queue.S, self.queue.S.srv_rate, "ST"),
         ]:
             if process.symbol == "D":
-                if not isinstance(table, pd.DataFrame) or column not in table.columns:
-                    raise ValueError("Deterministic input must be a DataFrame with a '{}' column.".format(column))
                 if len(table) < max_arr:
                     raise ValueError("Deterministic '{}' input has {} rows, but {} arrivals were requested.".format(
                         column, len(table), max_arr))
 
         if self.queue.S.symbol == "D" and "s_id" in self.queue.S.srv_rate.columns:
             assignments = self.queue.S.srv_rate.iloc[:max_arr]["s_id"]
-            if not assignments.isin(range(1, self.queue.c + 1)).all():
+            if not assignments.map(
+                lambda value: isinstance(value, (int, float, np.integer, np.floating))
+                and not isinstance(value, (bool, np.bool_))
+                and np.isfinite(value) and value == int(value)
+                and 1 <= value <= self.queue.c
+            ).all():
                 raise ValueError("Deterministic 's_id' values must identify a server from 1 to {}.".format(
                     self.queue.c))
 

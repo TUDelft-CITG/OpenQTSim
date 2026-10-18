@@ -1,4 +1,4 @@
-
+from openqtsim._validation import validate_process
 
 class ServiceProcess:
     """
@@ -11,6 +11,7 @@ class ServiceProcess:
         srv_rate: services per hour
         """
 
+        validate_process(symbol, srv_rate, "srv_rate", "ST")
         self.symbol = symbol
         self.srv_rate = srv_rate
 

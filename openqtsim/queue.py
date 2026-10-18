@@ -4,6 +4,7 @@ import pandas as pd
 from openqtsim.customer import Customer
 from openqtsim.arrival_process import ArrivalProcess
 from openqtsim.service_process import ServiceProcess
+from openqtsim._validation import validate_positive_integer, validate_process
 
 
 class Queue:
@@ -29,6 +30,23 @@ class Queue:
         self.K = K
         self.N = N
         self.D = D
+        self.validate()
+
+    def validate(self):
+        """Reject configurations not implemented by the simulation."""
+        if not isinstance(self.A, ArrivalProcess) or not isinstance(self.S, ServiceProcess):
+            raise ValueError("A and S must be ArrivalProcess and ServiceProcess objects.")
+        validate_positive_integer(self.c, "c")
+        for name, value in [("K", self.K), ("N", self.N)]:
+            if (isinstance(value, (bool, np.bool_)) or not np.isscalar(value)
+                    or not isinstance(value, (int, float, np.integer, np.floating))
+                    or value != np.inf):
+                raise ValueError("{} only supports positive infinity; finite capacity/population is not implemented.".format(
+                    name))
+        if not isinstance(self.D, str) or self.D != "FIFO":
+            raise ValueError("D only supports 'FIFO'; other queue disciplines are not implemented.")
+        validate_process(self.A.symbol, self.A.arr_rate, "arr_rate", "IAT")
+        validate_process(self.S.symbol, self.S.srv_rate, "srv_rate", "ST")
 
     def populate(self, Env, Sim):
         """
@@ -103,7 +121,7 @@ class Queue:
                 [4.3590, 2.0000, 1.2000, 0.9200, 0.6500, 0.5700, 0.4400, 0.4000, 0.3200, 0.3000]
             ])
 
-        elif kendall[0:5] == 'M/E2/n':
+        elif kendall.startswith('M/E2/'):
             # Create dataframe with data from Groenveld (2007) - Table IV (M/E2/n)
             # See also PIANC 2014 Table 6.1
             utilisations = np.array([.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .75, .8, .85, .9])
@@ -127,6 +145,9 @@ class Queue:
                 [4.50, 2.00, 1.34, 0.90, 0.70, 0.54, 0.46, 0.39, 0.34, 0.30, 0.26, 0.23, 0.20, 0.18],
                 [6.75, 3.14, 2.01, 1.45, 1.12, 0.91, 0.76, 0.65, 0.56, 0.50, 0.45, 0.40, 0.36, 0.33]
             ])
+
+        else:
+            raise ValueError("Waiting-factor lookup only supports M/M, M/E2, and E2/E2 queues.")
 
         df = pd.DataFrame(data, index=utilisations, columns=nr_of_servers)
 
@@ -180,7 +201,7 @@ class Queue:
                 [4.3590, 2.0000, 1.2000, 0.9200, 0.6500, 0.5700, 0.4400, 0.4000, 0.3200, 0.3000]
             ])
 
-        elif kendall[0:5] == 'M/E2/n':
+        elif kendall.startswith('M/E2/'):
             # Create dataframe with data from Groenveld (2007) - Table IV (M/E2/n)
             # See also PIANC 2014 Table 6.1
             utilisations = np.array([.1, .15, .2, .25, .3, .35, .4, .45, .5, .55, .6, .65, .7, .75, .8, .85, .9])
@@ -204,6 +225,9 @@ class Queue:
                 [4.50, 2.00, 1.34, 0.90, 0.70, 0.54, 0.46, 0.39, 0.34, 0.30, 0.26, 0.23, 0.20, 0.18],
                 [6.75, 3.14, 2.01, 1.45, 1.12, 0.91, 0.76, 0.65, 0.56, 0.50, 0.45, 0.40, 0.36, 0.33]
             ])
+
+        else:
+            raise ValueError("Waiting-factor lookup only supports M/M, M/E2, and E2/E2 queues.")
 
         df = pd.DataFrame(data, index=utilisations, columns=nr_of_servers)
 
