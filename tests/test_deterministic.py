@@ -148,3 +148,33 @@ def test_deterministic_and_stochastic_processes_can_be_combined(deterministic_ar
     assert (customers["TCWQ"] >= 0).all()
     if not deterministic_arrivals:
         np.testing.assert_array_equal(customers.sort_values("c_id")["ST"], [1, 2, 3])
+
+
+@pytest.mark.parametrize(
+    "arrival_names,service_names,expected",
+    [
+        (["Ship", "Ship", "Third"], None, ["Ship", "Ship", "Third"]),
+        (None, ["First", "Second", "Third"], ["First", "Second", "Third"]),
+        (["Arrival", None, " "], ["Service", "Fallback", "Last"], ["Arrival", "Fallback", "Last"]),
+        ([None, np.nan, ""], None, [None, None, None]),
+        (None, None, [None, None, None]),
+    ],
+)
+def test_customer_names_follow_rows_even_when_completion_order_differs(
+    arrival_names, service_names, expected,
+):
+    arrivals = pd.DataFrame({"IAT": [0, 1, 1]}, index=["c", "a", "b"])
+    services = pd.DataFrame({"ST": [10, 2, 1]}, index=[8, 4, 6])
+    if arrival_names is not None:
+        arrivals["name"] = arrival_names
+    if service_names is not None:
+        services["name"] = service_names
+    sim = openqtsim.Simulation(openqtsim.Queue(
+        openqtsim.ArrivalProcess("D", arrivals),
+        openqtsim.ServiceProcess("D", services),
+        c=2,
+    ))
+    sim.run(3)
+    customers, _ = sim.return_log()
+    assert sim.log["c_id"][0] == 2
+    assert customers.sort_values("c_id")["name"].tolist() == expected

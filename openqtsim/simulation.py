@@ -3,15 +3,25 @@ import pandas as pd
 import numpy as np
 import datetime
 import time
+import math
 from copy import copy
 from scipy import stats
 from collections import namedtuple
 import seaborn as sns
 import matplotlib.pyplot as plt
 from openqtsim.queue import Queue
-from openqtsim._validation import validate_positive_integer
+from openqtsim._validation import validate_positive_integer, validate_positive_rate
 from openqtsim._random import create_random_streams
 from openqtsim._statistics import calculate_statistics
+
+
+class _PatienceDeadline(simpy.events.Event):
+    def __init__(self, env, delay):
+        super().__init__(env)
+        self._ok = True
+        self._value = None
+        # Admission and releases at the deadline take precedence over reneging.
+        env.schedule(self, priority=2, delay=delay)
 
 
 class Simulation:
@@ -43,6 +53,12 @@ class Simulation:
         self.sim_start = datetime.datetime.now()
         self.env = simpy.Environment(initial_time=time.mktime(self.sim_start.timetuple()))
         self.env.epoch = time.mktime(self.sim_start.timetuple())
+        self.quay_occupied = 0.0
+        self.quay_lengths = {}
+        self.quay_admission = simpy.Resource(self.env, capacity=1)
+        self.capacity_changed = self.env.event()
+        self.customer_lengths = None
+        self.customer_maxwait = None
 
         # initialise counters and logs
         self.c_s = 0  # people in the system
@@ -55,6 +71,11 @@ class Simulation:
         self.customer_nr = 0
         self.log = {
             "c_id": [],  # c_id = customer id
+            "name": [],
+            "length": [],
+            "maxwait": [],
+            "status": [],
+            "departure": [],
             "IAT": [],  # IAT = inter arrival time
             "ST": [],  # ST = service time
             "AT": [],  # AT = now + IAT
@@ -151,9 +172,86 @@ class Simulation:
 
         self.max_arr = max_arr
 
+        for process, table in [
+            (self.queue.A, self.queue.A.arr_rate),
+            (self.queue.S, self.queue.S.srv_rate),
+        ]:
+            if process.symbol == "D" and "maxwait" in table.columns:
+                patience = table.iloc[:max_arr]["maxwait"].tolist()
+                for value in patience:
+                    if (isinstance(value, (bool, np.bool_))
+                            or not isinstance(value, (int, float, np.integer, np.floating))
+                            or not np.isfinite(value) or value < 0):
+                        raise ValueError("Customer maxwait must be a finite non-negative number.")
+                self.customer_maxwait = patience
+                break
+
+        if self.queue.quay_length is not None:
+            table = None
+            for process, candidate in [
+                (self.queue.A, self.queue.A.arr_rate),
+                (self.queue.S, self.queue.S.srv_rate),
+            ]:
+                if process.symbol == "D" and "length" in candidate.columns:
+                    table = candidate
+                    break
+            if table is None:
+                raise ValueError("quay_length requires a 'length' column in a deterministic input table.")
+            lengths = table.iloc[:max_arr]["length"].tolist()
+            for length in lengths:
+                validate_positive_rate(length, "Customer length")
+                if length > self.queue.quay_length:
+                    raise ValueError("Customer length exceeds quay_length; this vessel can never be served.")
+            self.customer_lengths = lengths
+
         self.env.run()
 
-    def log_customer_state(self, customer_id, IAT, AT, ST, TSB, TSE, ITS, s_id):
+    def request_server(self, customer_nr, assigned_server):
+        """Acquire joint capacity in FIFO order, or leave at the patience deadline."""
+        length = self.customer_lengths[customer_nr - 1] if self.customer_lengths is not None else 0
+        deadline = None
+        if self.customer_maxwait is not None:
+            deadline = _PatienceDeadline(self.env, self.customer_maxwait[customer_nr - 1])
+        if self.queue.quay_length is None:
+            with self.env.servers.get(
+                lambda server: assigned_server is None or server.id == assigned_server
+            ) as request:
+                if deadline is None:
+                    yield request
+                else:
+                    yield request | deadline
+                return request.value if request.triggered else None
+
+        with self.quay_admission.request() as request:
+            if deadline is None:
+                yield request
+            else:
+                yield request | deadline
+                if not request.triggered:
+                    return None
+            while True:
+                available = [
+                    server for server in self.env.servers.items
+                    if assigned_server is None or server.id == assigned_server
+                ]
+                required = math.fsum([*self.quay_lengths.values(), length])
+                fits = self.queue.quay_length is None or required <= self.queue.quay_length or math.isclose(
+                    required, self.queue.quay_length, rel_tol=1e-12, abs_tol=0.0)
+                if available and fits:
+                    if self.queue.quay_length is not None:
+                        self.quay_lengths[available[0].id] = length
+                        self.quay_occupied = required
+                    server = yield self.env.servers.get(lambda server: server.id == available[0].id)
+                    return server
+                if deadline is not None and deadline.processed:
+                    return None
+                if deadline is None:
+                    yield self.capacity_changed
+                else:
+                    yield self.capacity_changed | deadline
+
+    def log_customer_state(self, customer_id, IAT, AT, ST, TSB, TSE, ITS, s_id,
+                           *, status="served", departure=None):
         """
         # the following items are logged per customer that enters the system:
         # c = customer id
@@ -168,14 +266,33 @@ class Simulation:
         # s_id = id of server assigned to customer
         """
 
+        name = None
+        for process, table in [
+            (self.queue.A, self.queue.A.arr_rate),
+            (self.queue.S, self.queue.S.srv_rate),
+        ]:
+            if process.symbol == "D" and "name" in table.columns:
+                candidate = table.iloc[customer_id - 1]["name"]
+                if pd.notna(candidate) and str(candidate).strip():
+                    name = candidate
+                    break
+
         self.log["c_id"].append(customer_id)
+        self.log["name"].append(name)
+        self.log["length"].append(
+            self.customer_lengths[customer_id - 1] if self.customer_lengths is not None else None)
+        self.log["maxwait"].append(
+            self.customer_maxwait[customer_id - 1] if self.customer_maxwait is not None else None)
+        self.log["status"].append(status)
+        departure = TSE if departure is None else departure
+        self.log["departure"].append(departure)
         self.log["IAT"].append(IAT)
         self.log["ST"].append(ST)
         self.log["AT"].append(AT)
         self.log["TSB"].append(TSB)
         self.log["TSE"].append(TSE)
-        self.log["TCWQ"].append(TSB - AT)
-        self.log["TCSS"].append(TSE - AT)
+        self.log["TCWQ"].append((departure if status == "reneged" else TSB) - AT)
+        self.log["TCSS"].append(departure - AT)
         self.log["ITS"].append(ITS)
         self.log["s_id"].append(s_id)
 
@@ -208,13 +325,15 @@ class Simulation:
 
     def get_stats(self):
         """
-        Print and return statistics over time 0 through the last completion.
+        Print and return statistics over time 0 through the last departure.
         """
 
         df_cust, _ = self.return_log()
         if len(df_cust) != self.customer_nr:
-            raise ValueError("Statistics require all arrived customers to have completed service.")
+            raise ValueError("Statistics require all arrived customers to have departed (served or reneged).")
         summary = calculate_statistics(df_cust, self.queue.c)
+        if "reneged" in summary:
+            print("Departures: {} served, {} reneged".format(summary["served"], summary["reneged"]))
 
         value = summary["waiting_factor"]
         print('Waiting time in units of service time: {}'.format(

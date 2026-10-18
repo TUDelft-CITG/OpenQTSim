@@ -11,3 +11,4 @@ from .mt_engine import worker, Task
 from .queue import Queue
 from .service_process import ServiceProcess
 from .simulation import Simulation
+from .vessel_inputs import generate_vessel_tables

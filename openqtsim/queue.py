@@ -4,7 +4,7 @@ import pandas as pd
 from openqtsim.customer import Customer
 from openqtsim.arrival_process import ArrivalProcess
 from openqtsim.service_process import ServiceProcess
-from openqtsim._validation import validate_positive_integer, validate_process
+from openqtsim._validation import validate_positive_integer, validate_positive_rate, validate_process
 
 
 class Queue:
@@ -18,7 +18,8 @@ class Queue:
     - D is the queue discipline
     """
 
-    def __init__(self, A=ArrivalProcess(), S=ServiceProcess(), c=1, K=np.inf, N=np.inf, D="FIFO"):
+    def __init__(self, A=ArrivalProcess(), S=ServiceProcess(), c=1, K=np.inf, N=np.inf, D="FIFO",
+                 *, quay_length=None):
         """
         The first six inputs are the typical Kendall inputs. Without inputs the queue object returns an M/M/1 object as
         default
@@ -30,6 +31,7 @@ class Queue:
         self.K = K
         self.N = N
         self.D = D
+        self.quay_length = quay_length
         self.validate()
 
     def validate(self):
@@ -37,6 +39,8 @@ class Queue:
         if not isinstance(self.A, ArrivalProcess) or not isinstance(self.S, ServiceProcess):
             raise ValueError("A and S must be ArrivalProcess and ServiceProcess objects.")
         validate_positive_integer(self.c, "c")
+        if self.quay_length is not None:
+            validate_positive_rate(self.quay_length, "quay_length")
         for name, value in [("K", self.K), ("N", self.N)]:
             if (isinstance(value, (bool, np.bool_)) or not np.isscalar(value)
                     or not isinstance(value, (int, float, np.integer, np.floating))
