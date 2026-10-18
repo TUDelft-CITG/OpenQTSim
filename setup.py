@@ -24,6 +24,10 @@ requires = [
     "seaborn",
     "simpy",
     "scipy",
+    "xlrd",
+    "openpyxl",
+    "plotly",
+    "nbformat>=4.2",
     "sphinx_rtd_theme",
 ]
 
