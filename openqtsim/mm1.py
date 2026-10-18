@@ -4,6 +4,7 @@ import pandas as pd
 from openqtsim._validation import (
     validate_positive_integer, validate_positive_rate, validate_process, validate_seed,
 )
+from openqtsim._statistics import calculate_statistics
 
 
 class MM1:
@@ -104,29 +105,33 @@ class MM1:
 
     def get_stats(self, df_cust):
         """
-        Generate lists of IAT's and ST's drawn from exponential distributions.
+        Print and return statistics over time 0 through the last completion.
         """
 
-        value = np.mean(df_cust["TCWQ"]) / np.mean(df_cust["ST"])
-        print('Waiting time over service time: {:.4f}'.format(value))
+        summary = calculate_statistics(df_cust)
+        value = summary["waiting_factor"]
+        print('Waiting time over service time: {}'.format(
+            "{:.4f}".format(value) if value is not None else "undefined (mean service time is zero)"))
+        print('Observation horizon: 0 to {:.4f} hours'.format(summary["observation_end"]))
         print('')
 
-        value = (df_cust["TSE"].iloc[-1] - np.sum(df_cust["ITS"])) / df_cust["TSE"].iloc[-1]
+        value = summary["Rho_system"]
         print('Rho: system utilisation: {:.4f}'.format(value))
         print('')
 
-        value = np.sum(df_cust["ITS"]) / df_cust["TSE"].iloc[-1]
+        value = summary["P_0"]
         print('P_0: probability nobody in the system: {:.4f}'.format(value))
 
-        value = np.mean(df_cust["TCSS"])
-        print('W_s: the long term average time spent in the system: {:.4f}'.format(value))
+        value = summary["W_s"]
+        print('W_s: average time spent in the system: {:.4f}'.format(value))
 
-        value = np.mean(df_cust["TCWQ"])
-        print('W_q: the long term average time spent in the queue: {:.4f}'.format(value))
+        value = summary["W_q"]
+        print('W_q: average time spent in the queue: {:.4f}'.format(value))
 
-        value = df_cust["AT"].iloc[-1]/(len(df_cust["ST"])-1)
+        value = summary["IAT"]
         print('IAT: average inter arrival time: {:.4f}'.format(value))
 
-        value = np.sum(df_cust["ST"])/(len(df_cust["ST"]))
+        value = summary["ST"]
         print('ST: average service time: {:.4f}'.format(value))
         print('')
+        return summary

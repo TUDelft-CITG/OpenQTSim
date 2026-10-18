@@ -24,9 +24,7 @@ class Customer:
         # request access to server
         self.Sim.c_s += 1
         self.Sim.c_q += 1
-        t_req = AT
-        c_s_req = self.Sim.c_s
-        c_q_req = self.Sim.c_q
+        self.Sim.log_system_state(AT, self.Sim.c_s, self.Sim.c_q)
 
         service = self.Sim.queue.S
         if service.symbol == "D" and "s_id" in service.srv_rate.columns:
@@ -36,15 +34,7 @@ class Customer:
             server = yield self.Env.servers.get()
 
         self.Sim.c_q -= 1
-        t_yield = self.Env.now - self.Env.epoch
-        c_s_yield = self.Sim.c_s
-        c_q_yield = self.Sim.c_q
-
-        if t_req != t_yield:  # only log when someone is actually waiting to be served
-            self.Sim.log_system_state(t_req, c_s_req, c_q_req)
-            self.Sim.log_system_state(t_yield, c_s_yield, c_q_yield)
-        else:  # otherwise log the yield moment
-            self.Sim.log_system_state(t_yield, c_s_yield, c_q_yield)
+        self.Sim.log_system_state(self.Env.now - self.Env.epoch, self.Sim.c_s, self.Sim.c_q)
 
         # register if the server was idle
         ITS = self.Env.now - self.Env.server_info[server.id]['last_active']
@@ -65,10 +55,7 @@ class Customer:
         TSE = self.Env.now - self.Env.epoch
 
         self.Sim.c_s -= 1
-        if self.Sim.c_q == 0:
-            self.Sim.log_system_state(TSE, self.Sim.c_s, self.Sim.c_q)
-        # Todo: when a customer leaves the system while somebody is still in the queue, you get a double logging
-        #  (check how this works for more than 1 server)
+        self.Sim.log_system_state(TSE, self.Sim.c_s, self.Sim.c_q)
 
         # update server_info when server was last active
         self.Env.server_info.update({server.id: {'last_active': self.Env.now}})

@@ -9,6 +9,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from openqtsim.queue import Queue
 from openqtsim._validation import validate_positive_integer, validate_seed
+from openqtsim._statistics import calculate_statistics
 
 
 class Simulation:
@@ -189,51 +190,57 @@ class Simulation:
 
         # convert self.log to dataframe
         df_cust = pd.DataFrame.from_dict(self.log)
-        df_cust = df_cust.sort_values(by=['AT'], ascending=[True])
+        df_cust = df_cust.sort_values(by=['AT'], ascending=[True], kind="stable")
 
         # convert self.system_state to dataframe
         df_sys = pd.DataFrame.from_dict(self.system_state)
-        df_sys = df_sys.sort_values(by=['t'], ascending=[True])
+        df_sys = df_sys.sort_values(by=['t'], ascending=[True], kind="stable")
 
         return df_cust, df_sys
 
     def get_stats(self):
         """
-        Post processing of logs to print basic simulation statistics
+        Print and return statistics over time 0 through the last completion.
         """
 
-        df_cust, df_sys = self.return_log()
+        df_cust, _ = self.return_log()
+        if len(df_cust) != self.customer_nr:
+            raise ValueError("Statistics require all arrived customers to have completed service.")
+        summary = calculate_statistics(df_cust, self.queue.c)
 
-        value = np.mean(df_cust["TCWQ"]) / np.mean(df_cust["ST"])
-        print('Waiting time in units of service time: {:.4f}'.format(value))
+        value = summary["waiting_factor"]
+        print('Waiting time in units of service time: {}'.format(
+            "{:.4f}".format(value) if value is not None else "undefined (mean service time is zero)"))
+        print('Observation horizon: 0 to {:.4f} hours'.format(summary["observation_end"]))
         print('')
 
-        value = (df_cust["TSE"].iloc[-1] - np.sum(df_cust["ITS"])) / df_cust["TSE"].iloc[-1]
+        value = summary["Rho_system"]
         print('Rho_system: system utilisation: {:.4f}'.format(value))
-        value = (np.sum(df_cust["TCWQ"])/self.queue.c) / df_cust["TSE"].iloc[-1]
+        value = summary["Rho_server"]
         print('Rho_server: server utilisation: {:.4f}'.format(value))
 
-        value = np.sum(df_cust["ITS"]) / df_cust["TSE"].iloc[-1]
+        value = summary["P_0"]
         print('P_0: probability nobody in the system: {:.4f}'.format(value))
         print('')
 
-        value = np.mean(df_sys['c_s'])
+        value = summary["L_s"]
         print('L_s: average nr of customers in the system: {:.4f}'.format(value))
-        value = np.mean(df_sys['c_q'])
+        value = summary["L_q"]
 
         print('L_q: average nr of customers in the queue: {:.4f}'.format(value))
-        value = np.mean(df_cust["TCSS"])
-        print('W_s: the long term average time spent in the system: {:.4f}'.format(value))
-        value = np.mean(df_cust["TCWQ"])
-        print('W_q: the long term average time spent in the queue: {:.4f}'.format(value))
+        value = summary["W_s"]
+        print('W_s: average time spent in the system: {:.4f}'.format(value))
+        value = summary["W_q"]
+        print('W_q: average time spent in the queue: {:.4f}'.format(value))
         print('')
 
-        value = df_cust["AT"].iloc[-1]/(len(df_cust["ST"])-1)
+        value = summary["IAT"]
         print('IAT: average inter arrival time: {:.4f}'.format(value))
 
-        value = np.sum(df_cust["ST"])/(len(df_cust["ST"]))
+        value = summary["ST"]
         print('ST: average service time: {:.4f}'.format(value))
         print('')
+        return summary
 
     def plot_system_state(self, fontsize=20):
         """
@@ -249,8 +256,10 @@ class Simulation:
         sns.despine(left=True)
 
         # Plot a simple histogram with binsize determined automatically
-        a = sns.lineplot(x=df_sys['t'], y=df_sys['c_s'], color="b", label="Nr. cust. in system")
-        b = sns.lineplot(x=df_sys['t'], y=df_sys['c_q'], color="r", label="Nr. cust. in queue")
+        ax.step(df_sys['t'], df_sys['c_s'], where="post", color="b", label="Nr. cust. in system")
+        ax.step(df_sys['t'], df_sys['c_q'], where="post", color="r", label="Nr. cust. in queue")
+        ax.legend()
+        a = b = ax
 
         # set labels
         a.set_xlabel("Time (hours)", fontsize=fontsize)
