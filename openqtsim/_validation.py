@@ -16,12 +16,12 @@ def validate_positive_rate(value, name):
         raise ValueError("{} must be a finite positive number.".format(name))
 
 
-def validate_seed(seed):
+def validate_seed(seed, name="seed"):
     if seed is not None and (
         isinstance(seed, (bool, np.bool_)) or not isinstance(seed, Integral)
         or not 0 <= seed < 2**32
     ):
-        raise ValueError("seed must be None or an integer between 0 and 2**32 - 1.")
+        raise ValueError("{} must be None or an integer between 0 and 2**32 - 1.".format(name))
 
 
 def validate_process(symbol, rate, rate_name, column):

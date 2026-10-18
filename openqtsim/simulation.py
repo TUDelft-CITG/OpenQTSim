@@ -3,12 +3,14 @@ import pandas as pd
 import numpy as np
 import datetime
 import time
+from copy import copy
 from scipy import stats
 from collections import namedtuple
 import seaborn as sns
 import matplotlib.pyplot as plt
 from openqtsim.queue import Queue
-from openqtsim._validation import validate_positive_integer, validate_seed
+from openqtsim._validation import validate_positive_integer
+from openqtsim._random import create_random_streams
 from openqtsim._statistics import calculate_statistics
 
 
@@ -16,10 +18,10 @@ class Simulation:
     """
     A discrete event simulation that simulates the queue.
     - queue is a queue based on the queue class
-    - seed is a random seed to have retraceable simulations
+    - arrival_seed and service_seed control separate reproducible random streams
     """
 
-    def __init__(self, queue, max_arr=100, priority=False, seed=None):
+    def __init__(self, queue, max_arr=100, priority=False, *, arrival_seed=None, service_seed=None):
         """
         Initialization (the basic time unit is hours)
         """
@@ -28,11 +30,13 @@ class Simulation:
             raise ValueError("queue must be a Queue object.")
         queue.validate()
         validate_positive_integer(max_arr, "max_arr")
-        validate_seed(seed)
+        self.arrival_rng, self.service_rng = create_random_streams(arrival_seed, service_seed)
         if not isinstance(priority, (bool, np.bool_)) or priority:
             raise ValueError("priority only supports False; priority queues are not implemented.")
 
-        self.queue = queue
+        self.queue = copy(queue)
+        self.queue.A = copy(queue.A)
+        self.queue.S = copy(queue.S)
         self.max_arr = max_arr
 
         # set simulation time and epoch
@@ -61,9 +65,6 @@ class Simulation:
             "ITS": [],  # ITS = idle time of the server
             "s_id": []}  # s_id = server id
 
-        # activate random seed
-        np.random.seed(seed)
-
         # define arrival and service processes
         if not priority:
 
@@ -83,6 +84,9 @@ class Simulation:
             elif self.queue.A.symbol == "D":
                 # the deterministic type expects arr_rate to contain a dataframe with columns ["name","IAT","AT"]
                 self.queue.A.arrival_distribution = self.queue.A.arr_rate
+
+            if self.queue.A.symbol != "D":
+                self.queue.A.arrival_distribution.random_state = self.arrival_rng
 
             # --- service distribution ---
             self.env.servers = simpy.FilterStore(self.env, capacity=self.queue.c)
@@ -110,6 +114,10 @@ class Simulation:
                 for i in range(1, self.queue.c + 1):
                     self.env.servers.items.append(Server(self.queue.S.srv_rate, self.env.now, i))
                     self.env.server_info.update({i: {'last_active': self.env.now}})
+
+            if self.queue.S.symbol != "D":
+                for server in self.env.servers.items:
+                    server.service_distribution.random_state = self.service_rng
 
         # initiate queue populating process
         self.env.process(self.queue.populate(self.env, self))

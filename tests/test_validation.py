@@ -51,14 +51,15 @@ def test_priority_is_rejected(priority):
 
 
 @pytest.mark.parametrize("seed", [-1, 2**32, 1.5, True, "42", [42]])
-def test_invalid_seed_is_rejected(seed):
+@pytest.mark.parametrize("name", ["arrival_seed", "service_seed"])
+def test_invalid_seed_is_rejected(seed, name):
     with pytest.raises(ValueError, match="seed"):
-        openqtsim.Simulation(openqtsim.Queue(), seed=seed)
+        openqtsim.Simulation(openqtsim.Queue(), **{name: seed})
 
 
 @pytest.mark.parametrize("seed", [None, 0, 2**32 - 1])
 def test_valid_seed_boundaries_are_accepted(seed):
-    sim = openqtsim.Simulation(openqtsim.Queue(), seed=seed)
+    sim = openqtsim.Simulation(openqtsim.Queue(), arrival_seed=seed, service_seed=None)
     sim.run(2)
     assert len(sim.return_log()[0]) == 2
 
@@ -136,7 +137,7 @@ def test_mutated_process_is_validated_before_running():
         openqtsim.ArrivalProcess("M", 8), openqtsim.ServiceProcess("M", 9),
     )
     sim = openqtsim.Simulation(queue)
-    queue.S.symbol = "G"
+    sim.queue.S.symbol = "G"
     with pytest.raises(ValueError, match="distribution"):
         sim.run(2)
     assert sim.customer_nr == 0
@@ -149,7 +150,7 @@ def test_valid_stochastic_configuration_completes(symbol):
         openqtsim.ServiceProcess(symbol, 9),
         c=np.int64(2),
     )
-    sim = openqtsim.Simulation(queue, seed=np.int64(42))
+    sim = openqtsim.Simulation(queue, arrival_seed=np.int64(42), service_seed=np.int64(43))
     sim.run(np.int64(20))
     assert len(sim.return_log()[0]) == 20
 
@@ -168,14 +169,16 @@ def test_overloaded_finite_run_is_allowed():
     queue = openqtsim.Queue(
         openqtsim.ArrivalProcess("M", 20), openqtsim.ServiceProcess("M", 1),
     )
-    sim = openqtsim.Simulation(queue, seed=42)
+    sim = openqtsim.Simulation(queue, arrival_seed=42, service_seed=43)
     sim.run(20)
     assert len(sim.return_log()[0]) == 20
 
 
-@pytest.mark.parametrize("field,value", [("lam", 0), ("mu", np.inf), ("nr_arr", 2.5), ("seed", -1)])
+@pytest.mark.parametrize("field,value", [
+    ("lam", 0), ("mu", np.inf), ("nr_arr", 2.5), ("arrival_seed", -1), ("service_seed", -1),
+])
 def test_fast_solver_validates_configuration(field, value):
-    parameters = dict(lam=8, mu=9, nr_arr=2, seed=42)
+    parameters = dict(lam=8, mu=9, nr_arr=2, arrival_seed=42, service_seed=43)
     parameters[field] = value
     with pytest.raises(ValueError, match=field):
         openqtsim.MM1(**parameters)
@@ -189,7 +192,7 @@ def test_fast_solver_validates_customer_inputs(iat, st):
 
 
 def test_fast_solver_valid_inputs_remain_supported():
-    solver = openqtsim.MM1(8, 9, 3, seed=42)
+    solver = openqtsim.MM1(8, 9, 3, arrival_seed=42, service_seed=43)
     iat, st = solver.get_IAT_and_ST()
     result = solver.calculate(iat, st)
     assert len(result) == 3

@@ -153,7 +153,7 @@ def test_stochastic_statistics_match_time_integrated_event_log(servers):
     queue = openqtsim.Queue(
         openqtsim.ArrivalProcess("M", 8), openqtsim.ServiceProcess("M", 9), servers,
     )
-    sim = openqtsim.Simulation(queue, seed=42)
+    sim = openqtsim.Simulation(queue, arrival_seed=42, service_seed=43)
     sim.run(1000)
     summary = sim.get_stats()
     assert_state_integrals(sim, summary)

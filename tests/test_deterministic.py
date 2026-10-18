@@ -141,7 +141,7 @@ def test_deterministic_and_stochastic_processes_can_be_combined(deterministic_ar
     else:
         arrival = openqtsim.ArrivalProcess("M", 8)
         service = openqtsim.ServiceProcess("D", pd.DataFrame({"ST": [1, 2, 3]}))
-    sim = openqtsim.Simulation(openqtsim.Queue(arrival, service, 2), seed=42)
+    sim = openqtsim.Simulation(openqtsim.Queue(arrival, service, 2), arrival_seed=42, service_seed=43)
     sim.run(3)
     customers, _ = sim.return_log()
     assert len(customers) == 3

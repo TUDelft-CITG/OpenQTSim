@@ -2,8 +2,9 @@ from scipy import stats
 import numpy as np
 import pandas as pd
 from openqtsim._validation import (
-    validate_positive_integer, validate_positive_rate, validate_process, validate_seed,
+    validate_positive_integer, validate_positive_rate, validate_process,
 )
+from openqtsim._random import create_random_streams
 from openqtsim._statistics import calculate_statistics
 
 
@@ -14,7 +15,7 @@ class MM1:
     - MM1.calculate: values for AT, TSB, TSE, TCSS, TCWG and ITS are calculated per arrival
     - MM1.get_stats: print basic statistics based on the simulation results
     """
-    def __init__(self, lam, mu, nr_arr, seed=None):
+    def __init__(self, lam, mu, nr_arr, *, arrival_seed=None, service_seed=None):
         """
         Initialization the basic time unit is hours.
         """
@@ -22,12 +23,10 @@ class MM1:
         validate_positive_rate(lam, "lam")
         validate_positive_rate(mu, "mu")
         validate_positive_integer(nr_arr, "nr_arr")
-        validate_seed(seed)
+        self.arrival_rng, self.service_rng = create_random_streams(arrival_seed, service_seed)
         self.lam = lam  # arrivals per hour
         self.mu = mu  # departures per hour
         self.nr_arr = nr_arr  # nr of customers
-
-        np.random.seed(seed)
 
     def get_IAT_and_ST(self):  # generate list of inter arrival times
         """
@@ -38,10 +37,10 @@ class MM1:
         rv_st = stats.expon(scale=1 / self.mu)
 
         # generate list of inter arrival times
-        IAT = rv_iat.rvs(self.nr_arr)
+        IAT = rv_iat.rvs(self.nr_arr, random_state=self.arrival_rng)
 
         # generate list of service times
-        ST = rv_st.rvs(self.nr_arr)
+        ST = rv_st.rvs(self.nr_arr, random_state=self.service_rng)
 
         return IAT, ST
 
