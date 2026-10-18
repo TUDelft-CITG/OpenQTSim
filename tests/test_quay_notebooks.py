@@ -10,8 +10,8 @@ import pytest
 from openqtsim.visualizations import hover_time
 
 
-@pytest.mark.parametrize("arrival,service", [("D", "D"), ("D", "M"), ("M", "D"), ("M", "M")])
-def test_quay_notebook_executes_from_info_only(monkeypatch, arrival, service):
+@pytest.mark.parametrize("number,arrival,service", [(2, "D", "D"), (3, "D", "M"), (4, "M", "D"), (5, "M", "M")])
+def test_quay_notebook_executes_from_info_only(monkeypatch, number, arrival, service):
     folder = Path(__file__).resolve().parents[1] / "notebooks"
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
@@ -26,7 +26,7 @@ def test_quay_notebook_executes_from_info_only(monkeypatch, arrival, service):
 
     monkeypatch.setattr(pd, "read_excel", read_info)
     title = f"{arrival} {service} 2 (max 200 m)"
-    notebook = nbformat.read(folder / f"OpenQTSim - {title}.ipynb", as_version=4)
+    notebook = nbformat.read(folder / f"{number:04d} - {title}.ipynb", as_version=4)
     nbformat.validate(notebook)
     namespace = {}
     try:
@@ -70,7 +70,7 @@ def test_mm1_notebook_uses_lean_server_station(monkeypatch):
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
     monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
-    notebook = nbformat.read(folder / "OpenQTSim - M M 1 - 20 arrivals.ipynb", as_version=4)
+    notebook = nbformat.read(folder / "0006 - M M 1 - 20 arrivals.ipynb", as_version=4)
     nbformat.validate(notebook)
     namespace = {}
     try:
@@ -97,7 +97,7 @@ def test_mm1_million_notebook_compares_with_analytical_solution(monkeypatch):
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
     monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
-    notebook = nbformat.read(folder / "OpenQTSim - M M 1 - 1 million arrivals.ipynb", as_version=4)
+    notebook = nbformat.read(folder / "0007 - M M 1 - 1 million arrivals.ipynb", as_version=4)
     nbformat.validate(notebook)
     sources = [cell.source for cell in notebook.cells if cell.cell_type == "code"]
     assert any("nr_arr = 1_000_000" in source for source in sources)
@@ -125,7 +125,7 @@ def test_dd1_notebook_reproduces_lecture_queueing_table(monkeypatch):
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
     monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
-    notebook = nbformat.read(folder / "OpenQTSim - D D 1 example.ipynb", as_version=4)
+    notebook = nbformat.read(folder / "0001 - D D 1 example.ipynb", as_version=4)
     nbformat.validate(notebook)
     namespace = {}
     for cell in notebook.cells:
