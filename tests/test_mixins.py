@@ -87,9 +87,10 @@ def test_inspect_object_reports_required_and_optional_inputs(Vessel, Quay):
     styled, missing = inspect_object(Quay)
     table = styled.data.set_index("parameter")
     assert missing
-    assert table.loc["name", "status"] == table.loc["length", "status"] == "missing"
+    assert table.loc["name", "status"] == table.loc["length", "status"] == "mandatory"
     assert table.loc["nr_resources", "status"] == table.loc["id", "status"] == "optional (unused)"
     assert table.loc["nr_resources", "class"] == "HasResource" and table.loc["nr_resources", "default"] == "1"
+    assert "color: black" in styled.to_html()
     styled, missing = inspect_object(Quay, {"name": "Quay", "length": 200, "nr_resources": 2})
     table = styled.data.set_index("parameter")
     assert not missing

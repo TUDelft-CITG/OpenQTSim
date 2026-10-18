@@ -7,12 +7,11 @@ import math
 from copy import copy
 from scipy import stats
 from collections import namedtuple
-import seaborn as sns
-import matplotlib.pyplot as plt
 from openqtsim.queue import Queue
 from openqtsim._validation import validate_positive_integer, validate_positive_rate
 from openqtsim._random import create_random_streams
 from openqtsim._statistics import calculate_statistics
+from openqtsim.visualizations import plot_IAT_ST, plot_system_state
 
 
 class _PatienceDeadline(simpy.events.Event):
@@ -369,71 +368,20 @@ class Simulation:
         print('')
         return summary
 
-    def plot_system_state(self, fontsize=20):
+    def plot_system_state(self, max_points=100_000, height=500):
         """
-        Plot number of customers in the system and in the queue as a function of time
-        """
+        Plotly step plot of the number of customers in the system and in the queue as a function of time.
 
-        df_cust, df_sys = self.return_log()
-
-        sns.set(style="white", palette="muted", color_codes=True)
-
-        # Set up the matplotlib figure
-        fig, ax = plt.subplots(figsize=(14, 7), sharex=True)
-        sns.despine(left=True)
-
-        # Plot a simple histogram with binsize determined automatically
-        ax.step(df_sys['t'], df_sys['c_s'], where="post", color="b", label="Nr. cust. in system")
-        ax.step(df_sys['t'], df_sys['c_q'], where="post", color="r", label="Nr. cust. in queue")
-        ax.legend()
-        a = b = ax
-
-        # set labels
-        a.set_xlabel("Time (hours)", fontsize=fontsize)
-        a.set_ylabel("Nr. of customers", fontsize=fontsize)
-        a.tick_params(labelsize=fontsize)
-
-        # fig.suptitle(self.queue.kendall_notation, fontsize=fontsize)
-
-        return fig, ax
-
-    def plot_IAT_ST(self, fontsize=20):
-        """
-        Plot histograms of IAT's and ST's
+        Traces with more than max_points points are reduced (per bin: first, last, minimum and maximum).
         """
 
+        _, df_sys = self.return_log()
+        return plot_system_state(df_sys, max_points=max_points, height=height)
 
-        df_cust, df_sys = self.return_log()
+    def plot_IAT_ST(self, bins="auto", height=500):
+        """
+        Plotly histograms of the interarrival times and service times, with their means.
+        """
 
-        sns.set(style="white", palette="muted", color_codes=True)
-
-        # Set up the matplotlib figure
-        fig, axes = plt.subplots(1, 2, figsize=(14, 7), sharex=True)
-        sns.despine(left=True)
-
-        # Plot a simple histogram with binsize determined automatically
-        a = sns.histplot(df_cust['IAT'], kde=False, color="b", ax=axes[0])
-        IAT_av = np.mean(df_cust["IAT"])
-        # axes[0].plot([IAT_av, IAT_av], [0, axes[0].axis()[-1]], linewidth=3, color='k')
-        axes[0].plot([IAT_av, IAT_av], [0, 1000], linewidth=3, color='k')
-
-        b = sns.histplot(df_cust['ST'], kde=False, color="b", ax=axes[1])
-        ST_av = np.mean(df_cust["ST"])
-        # axes[1].plot([ST_av, ST_av], [0, axes[1].axis()[-1]], linewidth=3, color='k')
-        axes[1].plot([ST_av, ST_av], [0, 1000], linewidth=3, color='k')
-
-        # plt.setp(axes, yticks=[])
-        plt.tight_layout()
-
-        # set labels
-        a.set_xlabel("Inter arrival times", fontsize=fontsize)
-        a.set_ylabel("Nr. of customers", fontsize=fontsize)
-        a.tick_params(labelsize=fontsize)
-
-        b.set_xlabel("Service times", fontsize=fontsize)
-        b.set_ylabel("Nr. of customers", fontsize=fontsize)
-        b.tick_params(labelsize=fontsize)
-
-        # fig.suptitle(self.queue.kendall_notation, fontsize=fontsize)
-
-        return fig, axes
+        df_cust, _ = self.return_log()
+        return plot_IAT_ST(df_cust, bins=bins, height=height)

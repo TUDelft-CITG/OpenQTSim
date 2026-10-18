@@ -35,14 +35,16 @@ def inspect_object(Class, candidate_kwargs=None, show_parameter_table=False):
     """Tabulate the required and optional inputs of a (mixin-composed) class.
 
     candidate_kwargs: optional dict with the inputs you intend to provide; the table then marks
-    each parameter as 'missing', 'added', 'optional (used)' or 'optional (unused)'.
+    each parameter as 'mandatory' (required, not yet provided), 'added', 'optional (used)' or
+    'optional (unused)'.
     show_parameter_table: display the table; otherwise return (styled table, missing_parameters).
     """
     candidate_kwargs = {} if candidate_kwargs is None else candidate_kwargs
 
     def highlight_status(row):
-        colors = {"missing": "#ffcccc", "optional (unused)": "#ffe5b4", "optional (used)": "#e8f5e9"}
-        return ["background-color: {}".format(colors.get(row["status"], "#c8e6c9"))] * len(row)
+        colors = {"mandatory": "#ffcccc", "optional (unused)": "#ffe5b4", "optional (used)": "#e8f5e9"}
+        # explicit black text: otherwise the notebook theme's (light grey in dark themes) font colour is used
+        return ["background-color: {}; color: black".format(colors.get(row["status"], "#c8e6c9"))] * len(row)
 
     rows = []
     for cls, name, param in _init_parameters(Class):
@@ -59,7 +61,7 @@ def inspect_object(Class, candidate_kwargs=None, show_parameter_table=False):
     df = df.drop_duplicates("parameter")
     df["missing"] = df["required"] & ~df["provided"]
     df["status"] = "optional (unused)"
-    df.loc[df["missing"], "status"] = "missing"
+    df.loc[df["missing"], "status"] = "mandatory"
     df.loc[df["required"] & df["provided"], "status"] = "added"
     df.loc[~df["required"] & df["provided"], "status"] = "optional (used)"
     df = df.sort_values(

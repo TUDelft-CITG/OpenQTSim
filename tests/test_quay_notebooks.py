@@ -63,3 +63,78 @@ def test_quay_notebook_executes_from_info_only(monkeypatch, arrival, service):
         assert hover_time(48) == "48 h (2 days)"
     finally:
         plt.close("all")
+
+
+def test_mm1_notebook_uses_lean_server_station(monkeypatch):
+    folder = Path(__file__).resolve().parents[1] / "notebooks"
+    monkeypatch.chdir(folder)
+    monkeypatch.setattr(go.Figure, "show", lambda self: None)
+    monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
+    notebook = nbformat.read(folder / "OpenQTSim - M M 1 - 20 arrivals.ipynb", as_version=4)
+    nbformat.validate(notebook)
+    namespace = {}
+    try:
+        for cell in notebook.cells:
+            if cell.cell_type == "code":
+                source = "\n".join(line for line in cell.source.splitlines() if not line.startswith("%%"))
+                exec(compile(source, "M M 1 - 20 arrivals", "exec"), namespace)
+        assert "inspect_object(Server, show_parameter_table=True)" in [cell.source for cell in notebook.cells]
+        server = namespace["server"]
+        assert (server.name, server.nr_resources) == ("Server", 1)
+        q = namespace["q"]
+        assert q.station is server and q.c == 1 and q.quay_length is None
+        assert q.kendall_notation.startswith("M/M/1")
+        log = namespace["df"]
+        assert len(log) == 20 and set(log.status) == {"served"}
+        assert namespace["sim"].c_s == namespace["sim"].c_q == 0
+        assert len(namespace["fig"].data) > 0
+    finally:
+        plt.close("all")
+
+
+def test_mm1_million_notebook_compares_with_analytical_solution(monkeypatch):
+    folder = Path(__file__).resolve().parents[1] / "notebooks"
+    monkeypatch.chdir(folder)
+    monkeypatch.setattr(go.Figure, "show", lambda self: None)
+    monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
+    notebook = nbformat.read(folder / "OpenQTSim - M M 1 - 1 million arrivals.ipynb", as_version=4)
+    nbformat.validate(notebook)
+    sources = [cell.source for cell in notebook.cells if cell.cell_type == "code"]
+    assert any("nr_arr = 1_000_000" in source for source in sources)
+    namespace = {}
+    try:
+        for source in sources:
+            # a shorter run keeps the test fast; the notebook itself uses 1 million arrivals
+            source = source.replace("nr_arr = 1_000_000", "nr_arr = 20_000")
+            source = "\n".join(line for line in source.splitlines() if not line.startswith("%%"))
+            exec(compile(source, "M M 1 - 1 million arrivals", "exec"), namespace)
+        assert namespace["q"].station is namespace["server"] and namespace["q"].c == 1
+        comparison = namespace["comparison"]
+        assert list(comparison.index) == ["IAT", "ST", "Rho_server", "P_0", "P_1", "P_10", "L_s", "L_q", "W_s", "W_q"]
+        np.testing.assert_allclose(comparison.loc["L_s", "analytical"], 8)
+        np.testing.assert_allclose(comparison.loc["W_q", "analytical"], 8 / 9)
+        np.testing.assert_allclose(comparison.loc["P_0", "simulated"], namespace["summary"]["P_0"], atol=1e-9)
+        assert comparison.notna().all().all()
+        assert len(namespace["first"]) == 20 and len(namespace["df"]) == 20_000
+    finally:
+        plt.close("all")
+
+
+def test_dd1_notebook_reproduces_lecture_queueing_table(monkeypatch):
+    folder = Path(__file__).resolve().parents[1] / "notebooks"
+    monkeypatch.chdir(folder)
+    monkeypatch.setattr(go.Figure, "show", lambda self: None)
+    monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
+    notebook = nbformat.read(folder / "OpenQTSim - D D 1 example.ipynb", as_version=4)
+    nbformat.validate(notebook)
+    namespace = {}
+    for cell in notebook.cells:
+        if cell.cell_type == "code":
+            exec(compile(cell.source, "D D 1 example", "exec"), namespace)
+    assert namespace["q"].station is namespace["server"] and namespace["q"].c == 1
+    assert list(namespace["table"]["TSE"]) == [23, 31, 35, 42, 46, 54, 67, 72]
+    measures = namespace["measures"]
+    np.testing.assert_allclose(measures.loc[["W_s", "W_q", "L_q", "L_s"], "average over arriving customers"],
+                               [74 / 8, 21 / 8, 5 / 8, 13 / 8])
+    np.testing.assert_allclose(measures.loc[["W_s", "W_q", "L_q", "L_s"], "time average (sim.get_stats)"],
+                               [74 / 8, 21 / 8, 21 / 72, 74 / 72])

@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pytest
@@ -171,12 +170,39 @@ def test_stochastic_statistics_match_time_integrated_event_log(servers):
 def test_system_plot_uses_steps_without_averaging_simultaneous_events():
     sim = simulate([1, 0, 1], [4, 2, 1], servers=2)
     _, states = sim.return_log()
-    figure, axis = sim.plot_system_state()
-    try:
-        assert len(axis.lines) == 2
-        for line, column in zip(axis.lines, ["c_s", "c_q"]):
-            assert line.get_drawstyle() == "steps-post"
-            np.testing.assert_array_equal(line.get_xdata(), states["t"])
-            np.testing.assert_array_equal(line.get_ydata(), states[column])
-    finally:
-        plt.close(figure)
+    figure = sim.plot_system_state()
+    assert len(figure.data) == 2
+    for trace, column in zip(figure.data, ["c_s", "c_q"]):
+        assert trace.line.shape == "hv" and trace.showlegend is not False
+        np.testing.assert_array_equal(trace.x, states["t"])
+        np.testing.assert_array_equal(trace.y, states[column])
+
+
+def test_system_plot_reduces_large_logs_but_keeps_peaks():
+    from openqtsim.visualizations import plot_system_state
+
+    rng = np.random.default_rng(1)
+    states = pd.DataFrame({"t": np.arange(50_000.0), "c_s": rng.integers(0, 50, 50_000)})
+    states.loc[31_234, "c_s"] = 999
+    states["c_q"] = np.maximum(states["c_s"] - 1, 0)
+    figure = plot_system_state(states, max_points=1_000)
+    for trace, column in zip(figure.data, ["c_s", "c_q"]):
+        assert len(trace.x) <= 1_100 and "reduced" in trace.name
+        assert trace.x[0] == 0 and trace.x[-1] == 49_999
+        assert max(trace.y) == states[column].max() and min(trace.y) == states[column].min()
+        np.testing.assert_array_equal(trace.y, states[column].to_numpy()[np.asarray(trace.x, dtype=int)])
+
+
+def test_iat_st_plot_has_mean_lines_to_top_and_legend():
+    sim = simulate([1, 2, 3, 2], [0.5, 1, 1.5, 1], servers=1)
+    df_cust, _ = sim.return_log()
+    figure = sim.plot_IAT_ST()
+    bars = [trace for trace in figure.data if trace.type == "bar"]
+    means = [trace for trace in figure.data if trace.type == "scatter"]
+    assert len(bars) == len(means) == 2
+    for bar, mean, column, axis in zip(bars, means, ["IAT", "ST"], ["yaxis", "yaxis2"]):
+        assert sum(bar.y) == df_cust[column].notna().sum()
+        assert mean.x[0] == mean.x[1] == pytest.approx(df_cust[column].mean())
+        assert mean.y[0] == 0 and mean.y[1] == figure.layout[axis].range[1]
+        assert mean.line.color == "black" and "Mean" in mean.name
+    assert figure.layout.showlegend is not False
