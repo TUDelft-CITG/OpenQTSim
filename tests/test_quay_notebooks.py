@@ -120,6 +120,30 @@ def test_mm1_million_notebook_compares_with_analytical_solution(monkeypatch):
         plt.close("all")
 
 
+def test_e2e21_notebook_compares_with_kingman_approximation(monkeypatch):
+    folder = Path(__file__).resolve().parents[1] / "notebooks"
+    monkeypatch.chdir(folder)
+    monkeypatch.setattr(go.Figure, "show", lambda self: None)
+    monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
+    notebook = nbformat.read(folder / "0008 - E2 E2 1 example.ipynb", as_version=4)
+    nbformat.validate(notebook)
+    sources = [cell.source for cell in notebook.cells if cell.cell_type == "code"]
+    assert any("nr_arr = 100_000" in source for source in sources)
+    namespace = {}
+    for source in sources:
+        source = source.replace("nr_arr = 100_000", "nr_arr = 10_000")
+        source = "\n".join(line for line in source.splitlines() if not line.startswith("%%"))
+        exec(compile(source, "E2 E2 1 example", "exec"), namespace)
+    assert namespace["q"].kendall_notation.startswith("E2/E2/1")
+    assert namespace["q"].station is namespace["server"]
+    comparison = namespace["comparison"]
+    np.testing.assert_allclose(comparison.loc["W_q", "M/M/1 (exact)"], 8 / 9)
+    np.testing.assert_allclose(comparison.loc["W_q", "E2/E2/1 Kingman (approx.)"], 4 / 9)
+    np.testing.assert_allclose(comparison.loc["L_q", "M/M/1 (exact)"], 64 / 9)
+    assert comparison.notna().all().all()
+    assert len(namespace["first"]) == 20 and len(namespace["df"]) == 10_000
+
+
 def test_dd1_notebook_reproduces_lecture_queueing_table(monkeypatch):
     folder = Path(__file__).resolve().parents[1] / "notebooks"
     monkeypatch.chdir(folder)
