@@ -32,6 +32,10 @@ requires = [
     "sphinx_rtd_theme",
 ]
 
+extras_require = {
+    "dask": ["dask[distributed,diagnostics]"],
+}
+
 setup_requirements = [
     "pytest-runner",
 ]
@@ -59,6 +63,7 @@ setup(
     ],
     description="OpenQTSim facilitates discrete event simulation of queues with a Kendall notation.",
     install_requires=requires,
+    extras_require=extras_require,
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
