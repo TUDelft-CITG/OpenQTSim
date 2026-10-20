@@ -25,6 +25,15 @@ If you don not have [pip](https://pip.pypa.io) installed, this [Python installat
 
 You can read the [documentation](https://openqtsim.readthedocs.io/en/latest/installation.html) for other installation methods.
 
+## Book
+
+<a href="https://tudelft-citg.github.io/OpenQTSim/"><img src="docs/_static/book.png" alt="Preview of the OpenQTSim notebook book" width="800"></a>
+
+Read the [OpenQTSim book](https://tudelft-citg.github.io/OpenQTSim/), based on the
+numbered examples in the `notebooks` folder. The site is deployed by GitHub Actions
+from the `example_check` branch. Its first deployment becomes available after the
+workflow succeeds.
+
 ## Examples
 
 For development and CI, install test dependencies with
@@ -94,8 +103,14 @@ building if its results need refreshing.
 
 Original notebooks are unchanged; generated sources and HTML are ignored by Git.
 The **Build notebook book** GitHub Actions workflow builds and uploads the HTML as
-an artifact; it does not deploy a public website. The API documentation remains
-on Read the Docs.
+an artifact. Pushes to `example_check` also publish it to
+[GitHub Pages](https://tudelft-citg.github.io/OpenQTSim/); pull requests and other
+branches only build artifacts. In repository **Settings > Pages**, select
+**GitHub Actions** as the source, not **Deploy from a branch**. If the
+`github-pages` environment restricts deployment branches, allow `example_check`.
+The site URL does not contain the branch name. To publish from another branch
+later, update both `example_check` deployment conditions in the workflow.
+The API documentation remains on Read the Docs.
 
 ### Parallel simulations with Dask
 

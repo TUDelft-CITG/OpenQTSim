@@ -8,6 +8,7 @@ on:
       - "logo-OpenQTSim.png"
       - ".github/workflows/book.yml"
       - "tests/test_book.py"
+      - "README.md"
   pull_request:
     paths:
       - "book/**"
@@ -41,3 +42,26 @@ jobs:
           name: openqtsim-book-html
           path: book/_build/html
           if-no-files-found: error
+      - name: Upload GitHub Pages site
+        if: github.ref == 'refs/heads/example_check' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: book/_build/html
+
+  deploy:
+    if: github.ref == 'refs/heads/example_check' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy notebook book
+        id: deployment
+        uses: actions/deploy-pages@v4
