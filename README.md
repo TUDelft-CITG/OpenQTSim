@@ -47,37 +47,48 @@ backend declared in `pyproject.toml`; the retired `setup.py test` and
 
 The benefit of OpenQTSim is the generic set-up. This set-up allows the simulation of a range of queues with a Kendall notation. A number of examples are presented as Jupyter Notebooks in the [notebooks](notebooks) folder.
 
+### Queueing theory and simulation (0000-series)
+
+1. [Queueing theory](notebooks/0001%20-%20Queueing%20theory.ipynb): Kendall notation, utilisation, stability, Little's law, service levels and analytical reference results.
+2. [Simulation](notebooks/0002%20-%20Simulation.ipynb): discrete events, a worked event table, random streams, replications and interpretation of simulation statistics.
+
+### Basic queueing examples (1000-series)
+
 The numbered example notebooks in this repository are best read in order:
 
-1. [0001 - D D 1 example](notebooks/0001%20-%20D%20D%201%20example.ipynb): reproduces the queueing table (1 server) from the lecture slides.
-2. [0002 - D D 2 (max 200 m)](notebooks/0002%20-%20D%20D%202%20%28max%20200%20m%29.ipynb): reproduces the lecture example with 2 servers and a 200 m quay.
-3. [0003 - D M 2 (max 200 m)](notebooks/0003%20-%20D%20M%202%20%28max%20200%20m%29.ipynb): stochastic variation 1 (negative exponential service times).
-4. [0004 - M D 2 (max 200 m)](notebooks/0004%20-%20M%20D%202%20%28max%20200%20m%29.ipynb): stochastic variation 2 (negative exponential interarrival times).
-5. [0005 - M M 2 (max 200 m)](notebooks/0005%20-%20M%20M%202%20%28max%20200%20m%29.ipynb): stochastic variation 3 (both negative exponential).
-6. [0006 - M M 1 - 20 arrivals](notebooks/0006%20-%20M%20M%201%20-%2020%20arrivals.ipynb): a simple M/M/1 example.
-7. [0007 - M M 1 - 1 million arrivals](notebooks/0007%20-%20M%20M%201%20-%201%20million%20arrivals.ipynb): shows that a long run approaches the analytical solution.
-8. [0008 - E2 E2 1 example](notebooks/0008%20-%20E2%20E2%201%20example.ipynb): Erlang 2 interarrival and service times, compared with M/M/1 and Kingman's approximation.
+1. [D/D/1 - basics of queueing](notebooks/1001%20-%20D%20D%201%20-%20basics%20of%20queueing.ipynb): reproduces the queueing table (1 server) from the lecture slides.
+2. [D/D/2 (max 200 m)](notebooks/1002%20-%20D%20D%202%20%28max%20200%20m%29.ipynb): reproduces the lecture example with 2 servers and a 200 m quay.
+3. [D/M/2 (max 200 m)](notebooks/1003%20-%20D%20M%202%20%28max%20200%20m%29.ipynb): stochastic variation 1 (negative exponential service times).
+4. [M/D/2 (max 200 m)](notebooks/1004%20-%20M%20D%202%20%28max%20200%20m%29.ipynb): stochastic variation 2 (negative exponential interarrival times).
+5. [M/M/2 (max 200 m)](notebooks/1005%20-%20M%20M%202%20%28max%20200%20m%29.ipynb): stochastic variation 3 (both negative exponential).
+6. [M/M/1 - 20 arrivals](notebooks/1006%20-%20M%20M%201%20-%2020%20arrivals.ipynb): a simple M/M/1 example.
+7. [M/M/1 - 1 million arrivals](notebooks/1007%20-%20M%20M%201%20-%201%20million%20arrivals.ipynb): shows that a long run approaches the analytical solution.
+8. [E2/E2/1 - 1 million arrivals](notebooks/1008%20-%20E2%20E2%201%20-%201%20million%20arrivals.ipynb): Erlang 2 interarrival and service times, compared with M/M/1 and Kingman's approximation.
 
-The 1000-series notebooks run many simulations in parallel with Dask:
+### Parallel simulations with Dask (2000-series)
 
-1. [1001 - M M 1 using Dask](notebooks/1001%20-%20M%20M%201%20using%20Dask.ipynb): independent replications of an M/M/1 queue (100,000 customers each), compared with the analytical solution.
-2. [1002 - M M n - creating a queueing table](notebooks/1002%20-%20M%20M%20n%20-%20creating%20a%20queueing%20table.ipynb): waiting time in units of service time for 1-10 berths and 10-90 % berth occupancy (1,000,000 customers per combination), compared with the analytical M/M/n (Erlang C) table of PIANC (2014).
-3. [1003 - M E2 n - creating a queueing table](notebooks/1003%20-%20M%20E2%20n%20-%20creating%20a%20queueing%20table.ipynb): the same for M/E2/n, compared with the table of Groenveld (2001).
-4. [1004 - E2 E2 n - creating a queueing table](notebooks/1004%20-%20E2%20E2%20n%20-%20creating%20a%20queueing%20table.ipynb): the same for E2/E2/n, compared with the table of Groenveld (2001).
+The 2000-series notebooks run many simulations in parallel with Dask:
 
-The 2000-series notebooks explore queue organisation and berth planning:
+1. [M/M/1 - using Dask](notebooks/2001%20-%20M%20M%201%20-%20using%20Dask.ipynb): independent replications of an M/M/1 queue (100,000 customers each), compared with the analytical solution.
+2. [M/M/n - queueing table](notebooks/2002%20-%20M%20M%20n%20-%20queueing%20table.ipynb): waiting time in units of service time for 1-10 berths and 10-90 % berth occupancy (1,000,000 customers per combination), compared with the analytical M/M/n (Erlang C) table of PIANC (2014).
+3. [M/E2/n - queueing table](notebooks/2003%20-%20M%20E2%20n%20-%20queueing%20table.ipynb): the same for M/E2/n, compared with the table of Groenveld (2001).
+4. [E2/E2/n - queueing table](notebooks/2004%20-%20E2%20E2%20n%20-%20queueing%20table.ipynb): the same for E2/E2/n, compared with the table of Groenveld (2001).
 
-1. [2001 - Dedicated versus shared berths](notebooks/2001%20-%20Dedicated%20versus%20shared%20berths.ipynb): compare separate M/M/1 queues with a pooled M/M/2 queue at equal traffic and capacity.
-2. [2002 - Berth occupancy and waiting time](notebooks/2002%20-%20Berth%20occupancy%20and%20waiting%20time.ipynb): the occupancy "hockey stick" for 1, 2 and 4 berths, with analytical curves and simulation checks.
-3. [2003 - Berth planning by cost](notebooks/2003%20-%20Berth%20planning%20by%20cost.ipynb): balance annualised berth costs against vessel waiting costs at fixed demand.
-4. [2004 - Container terminal design and costs](notebooks/2004%20-%20Container%20terminal%20design%20and%20costs.ipynb): reconstruct the *Ports and Waterways* Section 4.4 example, then separately screen berth/crane alternatives by service level and annual quay, crane and vessel costs.
-5. [2005 - Container terminal lifecycle costs with OpenTESim](notebooks/2005%20-%20Container%20terminal%20lifecycle%20costs%20with%20OpenTESim.ipynb): use the actual OpenTESim asset cash-flow engine for phased construction, OPEX, replacement, residual value and discounted costs, alongside OpenQTSim service screening. Includes quay, cranes, trailers and storage stacks; distinguishes operator and wider economic perspectives.
+### Practical examples (3000-series)
+
+The 3000-series notebooks explore queue organisation and berth planning:
+
+1. [Dedicated versus shared berths](notebooks/3001%20-%20Dedicated%20versus%20shared%20berths.ipynb): compare separate M/M/1 queues with a pooled M/M/2 queue at equal traffic and capacity.
+2. [Berth occupancy and waiting time](notebooks/3002%20-%20Berth%20occupancy%20and%20waiting%20time.ipynb): the occupancy "hockey stick" for 1, 2 and 4 berths, with analytical curves and simulation checks.
+3. [Berth planning by cost](notebooks/3003%20-%20Berth%20planning%20by%20cost.ipynb): balance annualised berth costs against vessel waiting costs at fixed demand.
+4. [Container terminal design and costs](notebooks/3004%20-%20Container%20terminal%20design%20and%20costs.ipynb): reconstruct the *Ports and Waterways* Section 4.4 example, then separately screen berth/crane alternatives by service level and annual quay, crane and vessel costs.
+5. [Container terminal lifecycle costs with OpenTESim](notebooks/3005%20-%20Container%20terminal%20lifecycle%20costs%20with%20OpenTESim.ipynb): use the actual OpenTESim asset cash-flow engine for phased construction, OPEX, replacement, residual value and discounted costs, alongside OpenQTSim service screening. Includes quay, cranes, trailers and storage stacks; distinguishes operator and wider economic perspectives.
 
 These examples run serially by default (Dask is optional), use independent seeded
-replications, and compare simulation estimates with queueing theory. Example 2004
+replications, and compare simulation estimates with queueing theory. Example 3004
 uses E2/E2/n simulations and explicitly distinguishes the book's sizing convention
 from its workload-consistent economic extension.
-Example 2005 additionally requires a compatible OpenTESim installation. For sibling
+Example 3005 additionally requires a compatible OpenTESim installation. For sibling
 checkouts, run `pip install -e ../OpenTESim` from the OpenQTSim repository root in
 your existing environment. Its financial conventions follow OpenTESim notebook
 0031, using a consistent constant-price basis rather than mixed escalation settings.
@@ -138,12 +149,12 @@ an input `AT` column is not used.
 
 ### Shared quay capacity
 
-The quay notebooks (0002 to 0005, see the list above) read only the Excel `info`
+The quay notebooks (1002 to 1005, see the list above) read only the Excel `info`
 worksheet and expand it into visits using `openqtsim.generate_vessel_tables`.
 They cover fixed or negative-exponential arrivals and service.
 
 ```python
-info = pd.read_excel("notebooks/0002 - D D 2 (max 200 m).xlsx", sheet_name="info")
+info = pd.read_excel("notebooks/1002 - D D 2 (max 200 m).xlsx", sheet_name="info")
 arrival_table, service_table = openqtsim.generate_vessel_tables(
     info, nr_arrivals=20,
     arrival_distribution="D", service_distribution="M",

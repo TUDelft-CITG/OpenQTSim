@@ -18,36 +18,46 @@ figures are included without executing notebooks, requiring Dask, or importing
 OpenTESim. Save fresh notebook outputs before rebuilding when results change.
 The existing API documentation remains separate.
 
-Basic examples
---------------
+Queueing theory and simulation
+------------------------------
 
-The 0000-series notebooks are best read in order:
+The 0000-series introduces the concepts used throughout the examples:
 
-#. **0001 - D D 1 example**: reproduces the queueing table (1 server) from the lecture slides.
-#. **0002 - D D 2 (max 200 m)**: reproduces the lecture example with 2 servers and a 200 m quay
-   (input from ``0002 - D D 2 (max 200 m).xlsx``).
-#. **0003 - D M 2 (max 200 m)**: stochastic variation 1 (negative exponential service times).
-#. **0004 - M D 2 (max 200 m)**: stochastic variation 2 (negative exponential interarrival times).
-#. **0005 - M M 2 (max 200 m)**: stochastic variation 3 (both negative exponential).
-#. **0006 - M M 1 - 20 arrivals**: a simple M/M/1 example.
-#. **0007 - M M 1 - 1 million arrivals**: shows that a long run approaches the analytical solution.
-#. **0008 - E2 E2 1 example**: Erlang 2 interarrival and service times, compared with M/M/1 and
+#. **0001 - Queueing theory**: Kendall notation, stability, utilisation, Little's law
+   and analytical reference results.
+#. **0002 - Simulation**: event logic, an executable event table, reproducibility,
+   independent replications and interpreting finite-run statistics.
+
+Basic queueing examples
+-----------------------
+
+The 1000-series notebooks are best read in order:
+
+#. **1001 - D D 1 - basics of queueing**: reproduces the queueing table (1 server) from the lecture slides.
+#. **1002 - D D 2 (max 200 m)**: reproduces the lecture example with 2 servers and a 200 m quay
+   (input from ``1002 - D D 2 (max 200 m).xlsx``).
+#. **1003 - D M 2 (max 200 m)**: stochastic variation 1 (negative exponential service times).
+#. **1004 - M D 2 (max 200 m)**: stochastic variation 2 (negative exponential interarrival times).
+#. **1005 - M M 2 (max 200 m)**: stochastic variation 3 (both negative exponential).
+#. **1006 - M M 1 - 20 arrivals**: a simple M/M/1 example.
+#. **1007 - M M 1 - 1 million arrivals**: shows that a long run approaches the analytical solution.
+#. **1008 - E2 E2 1 - 1 million arrivals**: Erlang 2 interarrival and service times, compared with M/M/1 and
    Kingman's approximation.
 
 Parallel simulations with Dask
 ------------------------------
 
-The 1000-series notebooks run many independent simulations in parallel with `Dask`_
+The 2000-series notebooks run many independent simulations in parallel with `Dask`_
 (see ``openqtsim.mt_engine``). Install Dask with ``pip install -e ".[dask]"``.
 
-#. **1001 - M M 1 using Dask**: independent replications of an M/M/1 queue (100,000 customers each),
+#. **2001 - M M 1 - using Dask**: independent replications of an M/M/1 queue (100,000 customers each),
    compared with the analytical solution.
-#. **1002 - M M n - creating a queueing table**: waiting time in units of service time for 1-10 berths and
+#. **2002 - M M n - queueing table**: waiting time in units of service time for 1-10 berths and
    10-90 % berth occupancy (1,000,000 customers per combination), compared with the analytical M/M/n
    (Erlang C) table of PIANC (2014).
-#. **1003 - M E2 n - creating a queueing table**: the same for M/E2/n, compared with the table of
+#. **2003 - M E2 n - queueing table**: the same for M/E2/n, compared with the table of
    Groenveld (2001).
-#. **1004 - E2 E2 n - creating a queueing table**: the same for E2/E2/n, compared with the table of
+#. **2004 - E2 E2 n - queueing table**: the same for E2/E2/n, compared with the table of
    Groenveld (2001).
 
 ``create_tasks`` creates one task per utilisation, number of servers and replication (each with its own
@@ -67,33 +77,33 @@ That client can be a ``LocalCluster`` on your computer or a remote (HPC or cloud
         results = openqtsim.run_tasks(tasks, client)
     table = openqtsim.waiting_time_table(tasks, results)
 
-Queue organisation and berth planning
---------------------------------------
+Practical examples
+------------------
 
-The 2000-series notebooks combine queueing theory with independently seeded simulation
+The 3000-series notebooks combine queueing theory with independently seeded simulation
 replications. They run serially by default; an existing Dask client can optionally distribute the tasks.
 Error bars show one standard error across replications, not individual vessel variability or start-up bias.
 
-#. **2001 - Dedicated versus shared berths**: compare two dedicated M/M/1 queues with one shared
+#. **3001 - Dedicated versus shared berths**: compare two dedicated M/M/1 queues with one shared
    M/M/2 queue, keeping traffic and service rate per berth equal. Demonstrates the benefit of pooling.
-#. **2002 - Berth occupancy and waiting time**: analytical occupancy "hockey-stick" curves for 1, 2
+#. **3002 - Berth occupancy and waiting time**: analytical occupancy "hockey-stick" curves for 1, 2
    and 4 berths, checked with simulation. Distinguishes equal occupancy from equal traffic demand.
-#. **2003 - Berth planning by cost**: minimise annualised berth cost plus annual vessel waiting
+#. **3003 - Berth planning by cost**: minimise annualised berth cost plus annual vessel waiting
    cost at fixed demand. Unstable candidates are excluded; costs are illustrative teaching inputs.
-#. **2004 - Container terminal design and costs**: reconstruct the *Ports and Waterways* Part II,
+#. **3004 - Container terminal design and costs**: reconstruct the *Ports and Waterways* Part II,
    Chapter 4, Section 4.4 reference design (4 berths, 14 STS cranes). A separate E2/E2/n model
    screens alternatives against a waiting/service ratio and minimises annual quay, crane and
    vessel waiting/service costs. The occupancy convention differs explicitly from the book;
    crane allocation is an effective average, not a crane-resource scheduler. Financial inputs
    are illustrative, and annual costs conservatively use peak-demand waiting estimates.
-#. **2005 - Container terminal lifecycle costs with OpenTESim**: use the actual OpenTESim
+#. **3005 - Container terminal lifecycle costs with OpenTESim**: use the actual OpenTESim
    cash-flow mixins and lifecycle aggregation engine, following its notebook 0031. Quay,
    crane, trailer and storage assets have construction phasing, annual OPEX/insurance,
    replacement, residual value and decommissioning cash flows. OpenQTSim screens service
    quality; discounted costs are compared from terminal-operator and wider economic perspectives.
    The scope is partial terminal infrastructure, with illustrative constant-price inputs.
 
-Example 2005 needs a compatible OpenTESim installation in the same Python environment.
+Example 3005 needs a compatible OpenTESim installation in the same Python environment.
 For neighbouring checkouts, run ``pip install -e ../OpenTESim`` from the OpenQTSim repository
 root. OpenTESim is not required for the other examples or for the OpenQTSim library.
 

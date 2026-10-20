@@ -90,7 +90,7 @@ def _execute_notebook(monkeypatch, name, replacements):
 
 def test_mm1_dask_notebook_executes(monkeypatch):
     namespace = _execute_notebook(
-        monkeypatch, "1001 - M M 1 using Dask.ipynb",
+        monkeypatch, "2001 - M M 1 - using Dask.ipynb",
         {"nr_arr = 100_000": "nr_arr = 500", "nr_replications = 24": "nr_replications = 3"},
     )
     comparison = namespace["comparison"]
@@ -100,12 +100,12 @@ def test_mm1_dask_notebook_executes(monkeypatch):
 
 
 @pytest.mark.parametrize("number,A,S,reference_value", [
-    (1002, "M", "M", 0.6687),     # PIANC (2014) M/M/n table, n = 10 at 90 %
-    (1003, "M", "E2", 0.65),      # Groenveld (2001) M/E2/n table, n = 8 at 90 %
-    (1004, "E2", "E2", 0.4000),   # Groenveld (2001) E2/E2/n table, n = 8 at 90 %
+    (2002, "M", "M", 0.6687),     # PIANC (2014) M/M/n table, n = 10 at 90 %
+    (2003, "M", "E2", 0.65),      # Groenveld (2001) M/E2/n table, n = 8 at 90 %
+    (2004, "E2", "E2", 0.4000),   # Groenveld (2001) E2/E2/n table, n = 8 at 90 %
 ])
 def test_queueing_table_notebooks_execute(monkeypatch, number, A, S, reference_value):
-    name = f"{number} - {A} {S} n - creating a queueing table.ipynb"
+    name = f"{number} - {A} {S} n - queueing table.ipynb"
     namespace = _execute_notebook(
         monkeypatch, name,
         {"customers_per_cell = 1_000_000": "customers_per_cell = 600", "nr_arr = 100_000": "nr_arr = 300"},
@@ -114,7 +114,7 @@ def test_queueing_table_notebooks_execute(monkeypatch, number, A, S, reference_v
     table, reference = namespace["table"], namespace["reference"]
     assert len(namespace["tasks"]) == 9 * 10 * 2
     assert table.shape == (9, 10) and table.notna().all().all()
-    n = 10 if number == 1002 else 8
+    n = 10 if number == 2002 else 8
     np.testing.assert_allclose(reference.loc[0.9, n], reference_value, atol=1e-4)
     assert namespace["difference"].shape == table.shape
     assert list(namespace["pianc_layout"](table).index[[0, -1]]) == ["10%", "90%"]

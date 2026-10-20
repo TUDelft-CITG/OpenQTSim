@@ -20,7 +20,7 @@ def execute_notebook(monkeypatch, name, **overrides):
         if cell.cell_type == "code":
             exec(compile(cell.source, name, "exec"), namespace)
             if cell.id == "parameters":
-                defaults = {"2002": (100_000, 8), "2004": (30_000, 4), "2005": (30_000, 4)}
+                defaults = {"3002": (100_000, 8), "3004": (30_000, 4), "3005": (30_000, 4)}
                 expected = defaults.get(name[:4], (50_000, 4))
                 assert (namespace["nr_arr"], namespace["nr_replications"]) == expected
                 namespace.update(nr_arr=5_000, nr_replications=3)
@@ -29,7 +29,7 @@ def execute_notebook(monkeypatch, name, **overrides):
 
 
 def test_dedicated_and_shared_notebook_keeps_traffic_and_capacity_equal(monkeypatch):
-    ns = execute_notebook(monkeypatch, "2001 - Dedicated versus shared berths.ipynb")
+    ns = execute_notebook(monkeypatch, "3001 - Dedicated versus shared berths.ipynb")
     dedicated, pooled = ns["dedicated_tasks"], ns["pooled_tasks"]
     n, runs = ns["nr_berths"], ns["nr_replications"]
     assert len(dedicated) == n * runs and len(pooled) == runs
@@ -55,7 +55,7 @@ def test_dedicated_and_shared_notebook_keeps_traffic_and_capacity_equal(monkeypa
 
 
 def test_occupancy_notebook_preserves_service_rate_per_berth(monkeypatch):
-    ns = execute_notebook(monkeypatch, "2002 - Berth occupancy and waiting time.ipynb")
+    ns = execute_notebook(monkeypatch, "3002 - Berth occupancy and waiting time.ipynb")
     assert len(ns["tasks"]) == len(ns["servers"]) * len(ns["utilisations"]) * ns["nr_replications"]
     for task in ns["tasks"]:
         assert task.mu / task.c == ns["mu_server"]
@@ -75,7 +75,7 @@ def test_occupancy_notebook_preserves_service_rate_per_berth(monkeypatch):
 
 
 def test_cost_notebook_excludes_unstable_candidates_and_scales_annual_costs(monkeypatch):
-    ns = execute_notebook(monkeypatch, "2003 - Berth planning by cost.ipynb")
+    ns = execute_notebook(monkeypatch, "3003 - Berth planning by cost.ipynb")
     planning = ns["planning"]
     assert ns["stable_servers"] == [3, 4, 5, 6, 7, 8]
     assert np.isinf(planning.loc[[1, 2], "analytical total cost (EUR/year)"]).all()
@@ -102,11 +102,11 @@ def test_cost_notebook_excludes_unstable_candidates_and_scales_annual_costs(monk
 
 def test_cost_notebook_reports_when_no_candidate_is_stable(monkeypatch):
     with pytest.raises(ValueError, match="No candidate is stable"):
-        execute_notebook(monkeypatch, "2003 - Berth planning by cost.ipynb", arrival_rate=20)
+        execute_notebook(monkeypatch, "3003 - Berth planning by cost.ipynb", arrival_rate=20)
 
 
 def test_container_terminal_notebook_reconstructs_book_and_separates_extension(monkeypatch):
-    ns = execute_notebook(monkeypatch, "2004 - Container terminal design and costs.ipynb")
+    ns = execute_notebook(monkeypatch, "3004 - Container terminal design and costs.ipynb")
     assert ns["fleet"]["annual calls"].tolist() == [563, 228, 152]
     assert ns["annual_calls"] == 943
     assert ns["peak_workload_hours"] == 49_200
@@ -160,7 +160,7 @@ def test_container_terminal_notebook_reconstructs_book_and_separates_extension(m
 def test_opentesim_lifecycle_notebook_reconciles_assets_and_discounted_flows(monkeypatch):
     pytest.importorskip("opentesim")
     ns = execute_notebook(
-        monkeypatch, "2005 - Container terminal lifecycle costs with OpenTESim.ipynb",
+        monkeypatch, "3005 - Container terminal lifecycle costs with OpenTESim.ipynb",
         tariff_per_teu=25.0,
     )
     assert ns["annual_calls"] == 943
@@ -278,6 +278,6 @@ def test_opentesim_notebook_rejects_unstable_shortlist(monkeypatch):
     pytest.importorskip("opentesim")
     with pytest.raises(ValueError, match="No stable design"):
         execute_notebook(
-            monkeypatch, "2005 - Container terminal lifecycle costs with OpenTESim.ipynb",
+            monkeypatch, "3005 - Container terminal lifecycle costs with OpenTESim.ipynb",
             candidates=[(1, 1)],
         )

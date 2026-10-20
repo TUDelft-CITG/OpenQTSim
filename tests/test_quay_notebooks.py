@@ -26,7 +26,7 @@ def test_quay_notebook_executes_from_info_only(monkeypatch, number, arrival, ser
 
     monkeypatch.setattr(pd, "read_excel", read_info)
     title = f"{arrival} {service} 2 (max 200 m)"
-    notebook = nbformat.read(folder / f"{number:04d} - {title}.ipynb", as_version=4)
+    notebook = nbformat.read(folder / f"{1000 + number:04d} - {title}.ipynb", as_version=4)
     nbformat.validate(notebook)
     namespace = {}
     try:
@@ -34,7 +34,7 @@ def test_quay_notebook_executes_from_info_only(monkeypatch, number, arrival, ser
             if cell.cell_type == "code":
                 exec(compile(cell.source, str(folder / title), "exec"), namespace)
         assert sheets == ["info"]
-        assert notebook.cells[0].source.startswith(f"# {title}\n")
+        assert notebook.cells[0].source.startswith(f"# {arrival}/{service}/2 (max 200 m)\n")
         assert namespace["arrival_distribution"] == arrival
         assert namespace["service_distribution"] == service
         assert "inspect_object(Vessel, show_parameter_table=True)" in [cell.source for cell in notebook.cells]
@@ -70,7 +70,7 @@ def test_mm1_notebook_uses_lean_server_station(monkeypatch):
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
     monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
-    notebook = nbformat.read(folder / "0006 - M M 1 - 20 arrivals.ipynb", as_version=4)
+    notebook = nbformat.read(folder / "1006 - M M 1 - 20 arrivals.ipynb", as_version=4)
     nbformat.validate(notebook)
     namespace = {}
     try:
@@ -97,7 +97,7 @@ def test_mm1_million_notebook_compares_with_analytical_solution(monkeypatch):
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
     monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
-    notebook = nbformat.read(folder / "0007 - M M 1 - 1 million arrivals.ipynb", as_version=4)
+    notebook = nbformat.read(folder / "1007 - M M 1 - 1 million arrivals.ipynb", as_version=4)
     nbformat.validate(notebook)
     sources = [cell.source for cell in notebook.cells if cell.cell_type == "code"]
     assert any("nr_arr = 1_000_000" in source for source in sources)
@@ -125,7 +125,7 @@ def test_e2e21_notebook_compares_with_kingman_approximation(monkeypatch):
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
     monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
-    notebook = nbformat.read(folder / "0008 - E2 E2 - 1 million arrivals.ipynb", as_version=4)
+    notebook = nbformat.read(folder / "1008 - E2 E2 1 - 1 million arrivals.ipynb", as_version=4)
     nbformat.validate(notebook)
     sources = [cell.source for cell in notebook.cells if cell.cell_type == "code"]
     assert any("nr_arr = 1_000_000" in source for source in sources)
@@ -149,7 +149,7 @@ def test_dd1_notebook_reproduces_lecture_queueing_table(monkeypatch):
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
     monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
-    notebook = nbformat.read(folder / "0001 - D D 1 example.ipynb", as_version=4)
+    notebook = nbformat.read(folder / "1001 - D D 1 - basics of queueing.ipynb", as_version=4)
     nbformat.validate(notebook)
     namespace = {}
     for cell in notebook.cells:

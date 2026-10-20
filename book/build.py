@@ -55,9 +55,10 @@ def prepare_book(root: Path) -> Path:
 
     groups = {}
     captions = {
-        0: "Basic queueing and shared quays",
-        1: "Parallel simulations with Dask",
-        2: "Queue organisation and berth planning",
+        0: "Queueing theory and simulation",
+        1: "Basic queueing examples",
+        2: "Parallel simulations with Dask",
+        3: "Practical examples",
     }
     for path in notebooks:
         notebook = nbformat.read(path, as_version=4)

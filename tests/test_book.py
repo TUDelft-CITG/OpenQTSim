@@ -50,7 +50,8 @@ def write_notebook(root, name):
 
 def test_book_preserves_outputs_and_generates_grouped_toc(book_root):
     paths = [write_notebook(book_root, name) for name in [
-        "2005 - Costs.ipynb", "0002 - Shared quay.ipynb", "1001 - Dask.ipynb",
+        "3005 - Costs.ipynb", "1002 - Shared quay.ipynb", "2001 - Dask.ipynb",
+        "0001 - Theory.ipynb",
         "Scratch.ipynb",
     ]]
     originals = {path: path.read_bytes() for path in paths}
@@ -59,7 +60,12 @@ def test_book_preserves_outputs_and_generates_grouped_toc(book_root):
     toc = yaml.safe_load((source / "_toc.yml").read_text())
     chapters = [chapter["file"] for part in toc["parts"] for chapter in part["chapters"]]
     assert chapters == [
-        "notebooks/0002 - Shared quay", "notebooks/1001 - Dask", "notebooks/2005 - Costs",
+        "notebooks/0001 - Theory", "notebooks/1002 - Shared quay",
+        "notebooks/2001 - Dask", "notebooks/3005 - Costs",
+    ]
+    assert [part["caption"] for part in toc["parts"]] == [
+        "Queueing theory and simulation", "Basic queueing examples",
+        "Parallel simulations with Dask", "Practical examples",
     ]
     assert all("title" not in chapter for part in toc["parts"] for chapter in part["chapters"])
     assert not (source / "notebooks" / "Scratch.ipynb").exists()

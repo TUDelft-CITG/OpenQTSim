@@ -3,8 +3,9 @@
 **OpenQTSim** is an open-source discrete-event simulator for queues described by
 Kendall notation. This book brings together the numbered example notebooks.
 
-Start with the basic queueing and shared-quay examples, then explore parallel
-simulation with Dask and the berth-planning applications.
+Start with **Queueing theory and simulation** (0000-series), then read the
+**Basic queueing examples** (1000-series), **Parallel simulations with Dask**
+(2000-series) and **Practical examples** (3000-series).
 
 ## Reading and running the examples
 
@@ -22,15 +23,15 @@ pip install -e .
 ```
 
 The shared-quay examples also need the Excel input next to the notebook:
-[0002 - D D 2 (max 200 m).xlsx](notebooks/0002%20-%20D%20D%202%20%28max%20200%20m%29.xlsx).
+[1002 - D D 2 (max 200 m).xlsx](notebooks/1002%20-%20D%20D%202%20%28max%20200%20m%29.xlsx).
 
-The 1000-series uses optional Dask dependencies:
+The 2000-series uses optional Dask dependencies:
 
 ```bash
 pip install -e ".[dask]"
 ```
 
-The 2000-series normally runs serially. Example 2005 additionally requires a
+The 3000-series normally runs serially. Example 3005 additionally requires a
 compatible OpenTESim installation; for sibling checkouts, run
 `pip install -e ../OpenTESim` from the OpenQTSim repository root.
 

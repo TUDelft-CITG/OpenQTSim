@@ -50,7 +50,7 @@ It is recommended to install OpenQTSim in a separate (conda) environment. Instal
 Optional dependencies
 ---------------------
 
-The parallel simulations of ``openqtsim.mt_engine`` (the 1000-series example notebooks) use `Dask`_.
+The parallel simulations of ``openqtsim.mt_engine`` (the 2000-series example notebooks) use `Dask`_.
 Install Dask together with OpenQTSim with:
 
 .. code-block:: bash
