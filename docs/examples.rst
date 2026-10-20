@@ -2,9 +2,21 @@
 Examples
 ========
 
-The `notebooks`_ folder contains numbered example notebooks. They all construct their objects in the same way:
-customers and service stations are composed of mixins with ``openqtsim.create_object``, and
-``openqtsim.inspect_object`` shows their mandatory and optional inputs.
+The `notebooks`_ folder contains numbered example notebooks. The basic examples compose customers and
+service stations from mixins with ``openqtsim.create_object``; ``openqtsim.inspect_object`` shows their
+mandatory and optional inputs. The parallel and planning examples use ``openqtsim.mt_engine`` to
+construct and run replicated queue simulations.
+
+Notebook book
+-------------
+
+To turn all numbered notebooks into a browsable Jupyter Book, install
+``book/requirements.txt`` and run ``python book/build.py`` from the repository root.
+Open ``book/_build/html/index.html``. The table of contents is generated automatically
+and groups examples by their numbered series. Saved outputs and interactive Plotly
+figures are included without executing notebooks, requiring Dask, or importing
+OpenTESim. Save fresh notebook outputs before rebuilding when results change.
+The existing API documentation remains separate.
 
 Basic examples
 --------------
@@ -54,6 +66,36 @@ That client can be a ``LocalCluster`` on your computer or a remote (HPC or cloud
     with Client(LocalCluster()) as client:
         results = openqtsim.run_tasks(tasks, client)
     table = openqtsim.waiting_time_table(tasks, results)
+
+Queue organisation and berth planning
+--------------------------------------
+
+The 2000-series notebooks combine queueing theory with independently seeded simulation
+replications. They run serially by default; an existing Dask client can optionally distribute the tasks.
+Error bars show one standard error across replications, not individual vessel variability or start-up bias.
+
+#. **2001 - Dedicated versus shared berths**: compare two dedicated M/M/1 queues with one shared
+   M/M/2 queue, keeping traffic and service rate per berth equal. Demonstrates the benefit of pooling.
+#. **2002 - Berth occupancy and waiting time**: analytical occupancy "hockey-stick" curves for 1, 2
+   and 4 berths, checked with simulation. Distinguishes equal occupancy from equal traffic demand.
+#. **2003 - Berth planning by cost**: minimise annualised berth cost plus annual vessel waiting
+   cost at fixed demand. Unstable candidates are excluded; costs are illustrative teaching inputs.
+#. **2004 - Container terminal design and costs**: reconstruct the *Ports and Waterways* Part II,
+   Chapter 4, Section 4.4 reference design (4 berths, 14 STS cranes). A separate E2/E2/n model
+   screens alternatives against a waiting/service ratio and minimises annual quay, crane and
+   vessel waiting/service costs. The occupancy convention differs explicitly from the book;
+   crane allocation is an effective average, not a crane-resource scheduler. Financial inputs
+   are illustrative, and annual costs conservatively use peak-demand waiting estimates.
+#. **2005 - Container terminal lifecycle costs with OpenTESim**: use the actual OpenTESim
+   cash-flow mixins and lifecycle aggregation engine, following its notebook 0031. Quay,
+   crane, trailer and storage assets have construction phasing, annual OPEX/insurance,
+   replacement, residual value and decommissioning cash flows. OpenQTSim screens service
+   quality; discounted costs are compared from terminal-operator and wider economic perspectives.
+   The scope is partial terminal infrastructure, with illustrative constant-price inputs.
+
+Example 2005 needs a compatible OpenTESim installation in the same Python environment.
+For neighbouring checkouts, run ``pip install -e ../OpenTESim`` from the OpenQTSim repository
+root. OpenTESim is not required for the other examples or for the OpenQTSim library.
 
 .. _notebooks: https://github.com/TUDelft-CITG/OpenQTSim/tree/master/notebooks
 .. _Dask: https://www.dask.org

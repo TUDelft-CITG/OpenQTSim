@@ -1,0 +1,43 @@
+name: Build notebook book
+
+on:
+  push:
+    paths:
+      - "book/**"
+      - "notebooks/**"
+      - "logo-OpenQTSim.png"
+      - ".github/workflows/book.yml"
+      - "tests/test_book.py"
+  pull_request:
+    paths:
+      - "book/**"
+      - "notebooks/**"
+      - "logo-OpenQTSim.png"
+      - ".github/workflows/book.yml"
+      - "tests/test_book.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: book/requirements.txt
+      - name: Install book dependencies
+        run: python -m pip install -r book/requirements.txt pytest
+      - name: Test book preparation
+        run: python -m pytest -o addopts= -q tests/test_book.py
+      - name: Build from saved notebook outputs
+        run: python book/build.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openqtsim-book-html
+          path: book/_build/html
+          if-no-files-found: error

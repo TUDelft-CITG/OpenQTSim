@@ -47,6 +47,47 @@ The 1000-series notebooks run many simulations in parallel with Dask:
 3. [1003 - M E2 n - creating a queueing table](notebooks/1003%20-%20M%20E2%20n%20-%20creating%20a%20queueing%20table.ipynb): the same for M/E2/n, compared with the table of Groenveld (2001).
 4. [1004 - E2 E2 n - creating a queueing table](notebooks/1004%20-%20E2%20E2%20n%20-%20creating%20a%20queueing%20table.ipynb): the same for E2/E2/n, compared with the table of Groenveld (2001).
 
+The 2000-series notebooks explore queue organisation and berth planning:
+
+1. [2001 - Dedicated versus shared berths](notebooks/2001%20-%20Dedicated%20versus%20shared%20berths.ipynb): compare separate M/M/1 queues with a pooled M/M/2 queue at equal traffic and capacity.
+2. [2002 - Berth occupancy and waiting time](notebooks/2002%20-%20Berth%20occupancy%20and%20waiting%20time.ipynb): the occupancy "hockey stick" for 1, 2 and 4 berths, with analytical curves and simulation checks.
+3. [2003 - Berth planning by cost](notebooks/2003%20-%20Berth%20planning%20by%20cost.ipynb): balance annualised berth costs against vessel waiting costs at fixed demand.
+4. [2004 - Container terminal design and costs](notebooks/2004%20-%20Container%20terminal%20design%20and%20costs.ipynb): reconstruct the *Ports and Waterways* Section 4.4 example, then separately screen berth/crane alternatives by service level and annual quay, crane and vessel costs.
+5. [2005 - Container terminal lifecycle costs with OpenTESim](notebooks/2005%20-%20Container%20terminal%20lifecycle%20costs%20with%20OpenTESim.ipynb): use the actual OpenTESim asset cash-flow engine for phased construction, OPEX, replacement, residual value and discounted costs, alongside OpenQTSim service screening. Includes quay, cranes, trailers and storage stacks; distinguishes operator and wider economic perspectives.
+
+These examples run serially by default (Dask is optional), use independent seeded
+replications, and compare simulation estimates with queueing theory. Example 2004
+uses E2/E2/n simulations and explicitly distinguishes the book's sizing convention
+from its workload-consistent economic extension.
+Example 2005 additionally requires a compatible OpenTESim installation. For sibling
+checkouts, run `pip install -e ../OpenTESim` from the OpenQTSim repository root in
+your existing environment. Its financial conventions follow OpenTESim notebook
+0031, using a consistent constant-price basis rather than mixed escalation settings.
+
+### Build the notebook book
+
+The numbered notebooks can also be read as a Jupyter Book, using the same
+Sphinx-based format as OpenTNSim. In your existing Python environment, run:
+
+```bash
+python -m pip install -r book/requirements.txt
+python book/build.py
+```
+
+Open `book/_build/html/index.html` in a browser. All numbered notebooks are
+automatically included in numerical order, grouped by series. The build uses
+the notebooks' headings for navigation labels rather than their numbered filenames.
+It uses
+**saved outputs only**: it never reruns simulations or starts Dask workers,
+and OpenTESim is not needed to build the book. Interactive Plotly figures are
+preserved, with the JavaScript bundled locally. Rerun and save a notebook before
+building if its results need refreshing.
+
+Original notebooks are unchanged; generated sources and HTML are ignored by Git.
+The **Build notebook book** GitHub Actions workflow builds and uploads the HTML as
+an artifact; it does not deploy a public website. The API documentation remains
+on Read the Docs.
+
 ### Parallel simulations with Dask
 
 `openqtsim.mt_engine` runs many independent simulations in parallel. `create_tasks`

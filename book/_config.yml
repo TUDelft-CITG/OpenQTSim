@@ -1,0 +1,22 @@
+title: OpenQTSim examples
+author: Mark van Koningsveld and Joris den Uijl
+logo: logo-OpenQTSim.png
+
+execute:
+  execute_notebooks: "off"
+
+only_build_toc_files: true
+
+repository:
+  url: https://github.com/TUDelft-CITG/OpenQTSim
+
+html:
+  use_repository_button: true
+  use_issues_button: true
+
+sphinx:
+  config:
+    # Legacy notebooks intentionally use H4 subheadings directly below their title.
+    suppress_warnings: ["myst.header"]
+    html_js_files:
+      - plotly.min.js
