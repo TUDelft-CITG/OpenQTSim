@@ -25,7 +25,7 @@ requires = [
 
 extras_require = {
     "dask": ["dask[distributed,diagnostics]"],
-    "testing": ["pytest", "pytest-cov"],
+    "testing": ["pytest", "pytest-cov", "ipython"],
 }
 
 with open("README.md", "r") as des:

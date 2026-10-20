@@ -125,13 +125,13 @@ def test_e2e21_notebook_compares_with_kingman_approximation(monkeypatch):
     monkeypatch.chdir(folder)
     monkeypatch.setattr(go.Figure, "show", lambda self: None)
     monkeypatch.setattr("IPython.display.display", lambda *args, **kwargs: None)
-    notebook = nbformat.read(folder / "0008 - E2 E2 1 example.ipynb", as_version=4)
+    notebook = nbformat.read(folder / "0008 - E2 E2 - 1 million arrivals.ipynb", as_version=4)
     nbformat.validate(notebook)
     sources = [cell.source for cell in notebook.cells if cell.cell_type == "code"]
-    assert any("nr_arr = 100_000" in source for source in sources)
+    assert any("nr_arr = 1_000_000" in source for source in sources)
     namespace = {}
     for source in sources:
-        source = source.replace("nr_arr = 100_000", "nr_arr = 10_000")
+        source = source.replace("nr_arr = 1_000_000", "nr_arr = 10_000")
         source = "\n".join(line for line in source.splitlines() if not line.startswith("%%"))
         exec(compile(source, "E2 E2 1 example", "exec"), namespace)
     assert namespace["q"].kendall_notation.startswith("E2/E2/1")

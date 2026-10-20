@@ -29,6 +29,7 @@ You can read the [documentation](https://openqtsim.readthedocs.io/en/latest/inst
 
 For development and CI, install test dependencies with
 `python -m pip install -e ".[testing,dask]"` and run `python -m pytest`.
+The testing extra includes IPython for notebook execution and display checks.
 Build API documentation with
 `python -m sphinx -b html -n -W --keep-going docs docs/_build/html`
 after installing `docs/requirements.txt`. Packaging uses the isolated setuptools
