@@ -9,8 +9,11 @@ on:
       - ".github/workflows/book.yml"
       - "tests/test_book.py"
       - "README.md"
+      - "docs/_static/**"
   pull_request:
     paths:
+      - "README.md"
+      - "docs/_static/**"
       - "book/**"
       - "notebooks/**"
       - "logo-OpenQTSim.png"
