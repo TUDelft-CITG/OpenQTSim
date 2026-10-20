@@ -27,6 +27,14 @@ You can read the [documentation](https://openqtsim.readthedocs.io/en/latest/inst
 
 ## Examples
 
+For development and CI, install test dependencies with
+`python -m pip install -e ".[testing,dask]"` and run `python -m pytest`.
+Build API documentation with
+`python -m sphinx -b html -n -W --keep-going docs docs/_build/html`
+after installing `docs/requirements.txt`. Packaging uses the isolated setuptools
+backend declared in `pyproject.toml`; the retired `setup.py test` and
+`setup.py docs` commands are no longer used by CircleCI.
+
 The benefit of OpenQTSim is the generic set-up. This set-up allows the simulation of a range of queues with a Kendall notation. A number of examples are presented as Jupyter Notebooks in the [notebooks](notebooks) folder.
 
 The numbered example notebooks in this repository are best read in order:

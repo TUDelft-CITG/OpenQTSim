@@ -6,16 +6,7 @@ This file was generated with PyScaffold 3.1.
 PyScaffold helps you to put up the scaffold of your new Python project.
 Learn more under: https://pyscaffold.org/
 """
-import sys
-
-from pkg_resources import require, VersionConflict
 from setuptools import setup, find_packages
-
-try:
-    require("setuptools>=38.3")
-except VersionConflict:
-    print("Error: version of setuptools is too old (<38.3)!")
-    sys.exit(1)
 
 requires = [
     "matplotlib",
@@ -34,16 +25,8 @@ requires = [
 
 extras_require = {
     "dask": ["dask[distributed,diagnostics]"],
+    "testing": ["pytest", "pytest-cov"],
 }
-
-setup_requirements = [
-    "pytest-runner",
-]
-
-tests_require = [
-    "pytest",
-    "pytest-cov",
-]
 
 with open("README.md", "r") as des:
     long_description = des.read()
@@ -70,9 +53,6 @@ setup(
     keywords="Queueing Theory",
     name="openqtsim",
     packages=find_packages(include=["openqtsim", "openqtsim.*"]),
-    setup_requires=setup_requirements,
-    test_suite="tests",
-    tests_require=tests_require,
     url="https://github.com/TUDelft-CITG/OpenQTSim",
     version="v0.5.1",
     zip_safe=False,
