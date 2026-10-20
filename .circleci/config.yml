@@ -12,7 +12,7 @@ jobs:
       - run:
           name: Install test and documentation dependencies
           command: |
-            docker exec openqtsim python -m pip install -e ".[testing,dask]" -r docs/requirements.txt coverage-badge
+            docker exec openqtsim python -m pip install -e ".[testing,dask]" -r docs/requirements.txt "genbadge[coverage]>=1.1"
       
       - run:
           name: Run tests
@@ -30,7 +30,8 @@ jobs:
       - run:
           name: Generate coverage badge
           command: |
-            docker exec openqtsim coverage-badge -o coverage.svg
+            docker exec openqtsim python -m coverage xml -o coverage.xml
+            docker exec openqtsim genbadge coverage --local -i coverage.xml -o coverage.svg
             docker cp openqtsim:/OpenQTSim/coverage.svg /tmp/artifacts/
       
       - store_artifacts:
