@@ -96,7 +96,7 @@ todo_include_todos = False
 # -- Options for HTML output -------------------------------------------
 
 # Add a logo
-html_logo = "OpenQTSim.png"
+html_logo = "../logo-OpenQTSim.png"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
